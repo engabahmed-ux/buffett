@@ -29,17 +29,17 @@
     
     .agility-logo-box {
       background: #ffffff;
-      padding: 12px 24px;
+      padding: 10px 20px;
       border-radius: 16px;
-      margin-bottom: 16px;
+      margin-bottom: 15px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.35);
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .agility-logo-box svg {
-      width: 210px;
-      height: 60px;
+    .agility-logo-box img {
+      width: 200px;
+      height: auto;
       display: block;
     }
 
@@ -118,14 +118,14 @@
     }
     .hud-logo {
       background: #fff;
-      padding: 3px 8px;
+      padding: 2px 6px;
       border-radius: 6px;
       display: flex;
       align-items: center;
     }
-    .hud-logo svg {
-      width: 80px;
-      height: 22px;
+    .hud-logo img {
+      width: 75px;
+      height: auto;
       display: block;
     }
 
@@ -266,25 +266,10 @@
 </head>
 <body>
 
-  <!-- شاشة البداية مع لوجو Agility المتجهي المطابق 100% -->
+  <!-- شاشة البداية مع لوجو Agility الرسمي المدمج -->
   <div id="menuScreen">
     <div class="agility-logo-box">
-      <svg viewBox="0 0 440 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- رمز الصقر المجنح (Falcon Wing Icon) -->
-        <g transform="translate(130, 0)">
-          <!-- منقار ورأس الصقر الذهبي -->
-          <path d="M22 62 C15 58, 20 48, 40 38 C55 30, 68 28, 72 38 C60 48, 38 58, 22 62 Z" fill="#FDB813"/>
-          <path d="M50 28 C65 14, 82 12, 95 24 C80 32, 65 34, 50 28 Z" fill="#F37023"/>
-          <!-- الجناح الانسيابي الممتد البرتقالي -->
-          <path d="M60 42 C105 30, 160 52, 210 60 C250 66, 290 48, 310 52 C265 82, 205 78, 160 62 C125 50, 85 58, 60 42 Z" fill="#E8501D"/>
-          <!-- الطبقة السفلية المتدرجة -->
-          <path d="M80 50 C130 40, 190 62, 230 66 C180 78, 120 70, 80 50 Z" fill="#FF8D24"/>
-          <!-- القوس الأبيض الانسيابي لعين وجسم الصقر -->
-          <path d="M62 45 C78 36, 105 44, 125 52 C95 56, 75 52, 62 45 Z" fill="#FFFFFF"/>
-        </g>
-        <!-- كلمة Agility النصية الأصلية باللون العنابي -->
-        <text x="10" y="98" font-family="'Times New Roman', Times, Georgia, serif" font-weight="bold" font-style="italic" font-size="78" fill="#8B1D2C">Agility</text>
-      </svg>
+      <img id="mainLogo" alt="Agility Logo">
     </div>
     <h1>قائمة مشروبات أجيلتي</h1>
     <p>اختر مشروبك المفضل وقد السفينة للرسو واستلامه</p>
@@ -294,16 +279,7 @@
 
   <div class="hud" id="gameHud">
     <div class="hud-logo">
-      <svg viewBox="0 0 440 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g transform="translate(130, 0)">
-          <path d="M22 62 C15 58, 20 48, 40 38 C55 30, 68 28, 72 38 C60 48, 38 58, 22 62 Z" fill="#FDB813"/>
-          <path d="M50 28 C65 14, 82 12, 95 24 C80 32, 65 34, 50 28 Z" fill="#F37023"/>
-          <path d="M60 42 C105 30, 160 52, 210 60 C250 66, 290 48, 310 52 C265 82, 205 78, 160 62 C125 50, 85 58, 60 42 Z" fill="#E8501D"/>
-          <path d="M80 50 C130 40, 190 62, 230 66 C180 78, 120 70, 80 50 Z" fill="#FF8D24"/>
-          <path d="M62 45 C78 36, 105 44, 125 52 C95 56, 75 52, 62 45 Z" fill="#FFFFFF"/>
-        </g>
-        <text x="10" y="98" font-family="'Times New Roman', Times, Georgia, serif" font-weight="bold" font-style="italic" font-size="78" fill="#8B1D2C">Agility</text>
-      </svg>
+      <img id="hudLogo" alt="Agility">
     </div>
     <span id="hudText">اسحب في أي مكان بالشاشة لتوجيه السفينة</span>
   </div>
@@ -312,7 +288,6 @@
   
   <canvas id="gameCanvas"></canvas>
 
-  <!-- زر الزمارة المستمرة -->
   <button class="horn-btn" id="hornBtn" title="زمارة السفينة">📢</button>
 
   <div class="minimap-container">
@@ -334,6 +309,27 @@
   </div>
 
   <script>
+    // تضمين رسم لوجو Agility الداخلي المباشر
+    const agilitySvgData = "data:image/svg+xml;utf8," + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 100" width="100%" height="100%">
+        <g transform="translate(95, 20)">
+          <!-- منقار ورأس الصقر -->
+          <path d="M10,25 C5,22 8,16 22,12 C32,8 42,7 45,12 C38,16 22,22 10,25 Z" fill="#FDB813"/>
+          <path d="M30,8 C40,2 52,1 60,7 C50,11 40,12 30,8 Z" fill="#F37023"/>
+          <!-- الجناح الانسيابي الممتد البرتقالي -->
+          <path d="M38,15 C70,9 110,24 145,28 C175,32 205,22 218,25 C185,42 140,40 108,30 C82,22 55,27 38,15 Z" fill="#F37023"/>
+          <path d="M52,20 C88,14 130,30 160,32 C125,38 82,34 52,20 Z" fill="#FF8D24"/>
+          <!-- القوس الأبيض الانسيابي لعين وجسم الصقر -->
+          <path d="M40,17 C52,12 72,17 85,22 C65,25 50,22 40,17 Z" fill="#FFFFFF"/>
+        </g>
+        <!-- كلمة Agility النصية الأصلية باللون العنابي -->
+        <text x="5" y="68" font-family="'Times New Roman', Times, Georgia, serif" font-weight="bold" font-style="italic" font-size="52" fill="#8B1D2C">Agility</text>
+      </svg>
+    `);
+
+    document.getElementById('mainLogo').src = agilitySvgData;
+    document.getElementById('hudLogo').src = agilitySvgData;
+
     const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID";
 
     const canvas = document.getElementById('gameCanvas');
@@ -364,7 +360,6 @@
       height = canvas.height = window.innerHeight;
     });
 
-    /* المحرك الصوتي */
     let audioCtx = null, engineOsc = null, engineGain = null, waveGain = null, sandNoiseGain = null;
     let hornOsc1 = null, hornOsc2 = null, hornGain = null;
     let isHonking = false;
