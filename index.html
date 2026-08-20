@@ -114,26 +114,25 @@
     }
     #minimapCanvas { width: 100%; height: 100%; }
 
-    /* عصا التحكم اللمسية العائمة الديناميكية */
     #floatingJoystick {
       display: none;
       position: fixed;
-      width: 110px;
-      height: 110px;
-      margin-left: -55px;
-      margin-top: -55px;
-      background: rgba(10, 37, 64, 0.45);
-      border: 2px solid rgba(255, 255, 255, 0.5);
+      width: 100px;
+      height: 100px;
+      margin-left: -50px;
+      margin-top: -50px;
+      background: rgba(10, 37, 64, 0.4);
+      border: 2px solid rgba(255, 255, 255, 0.6);
       border-radius: 50%;
       z-index: 15;
       pointer-events: none;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
     #floatingKnob {
-      width: 44px;
-      height: 44px;
-      margin-left: -22px;
-      margin-top: -22px;
+      width: 42px;
+      height: 42px;
+      margin-left: -21px;
+      margin-top: -21px;
       position: absolute;
       top: 50%;
       left: 50%;
@@ -214,12 +213,12 @@
 
   <div id="menuScreen">
     <h1>⚓ قائمة مشروبات قناة السويس</h1>
-    <p>اختر مشروبك المفضل والمس أي مكان بالشاشة لقيادة وتوجيه السفينة</p>
+    <p>اختر مشروبك المفضل واسحب إصبعك في أي اتجاه لتتحرك السفينة إليه مباشرة</p>
     <div class="drink-grid" id="drinkGrid"></div>
     <button id="startSailingBtn" disabled>ابدأ رحلة الإبحار 🚢</button>
   </div>
 
-  <div class="hud" id="gameHud">⚓ المس واسحب في أي مكان بالشاشة للتحكم بالسفينة</div>
+  <div class="hud" id="gameHud">⚓ اسحب في أي اتجاه على الشاشة لتتجه السفينة إليه مباشرة</div>
   <div class="status-toast" id="statusToast">❌ لم يصب الهلب! حاول مجدداً</div>
   
   <canvas id="gameCanvas"></canvas>
@@ -228,7 +227,6 @@
     <canvas id="minimapCanvas" width="75" height="135"></canvas>
   </div>
 
-  <!-- الجويستيك العائم الذي يظهر تحت الإصبع -->
   <div id="floatingJoystick">
     <div id="floatingKnob"></div>
   </div>
@@ -431,22 +429,20 @@
       worldY: 100,
       width: 34,
       height: 62,
-      speed: 0,
-      maxForwardSpeed: 3.8,
-      maxReverseSpeed: -2.2,
-      turnSpeed: 0.045,
+      speedX: 0,
+      speedY: 0,
+      maxSpeed: 4.2,
       angle: -Math.PI / 2,
       wake: []
     };
 
-    // إدارة الجويستيك الديناميكي العائم
     let touchOrigin = null;
-    let joystickInput = { x: 0, y: 0 };
+    let directMove = { x: 0, y: 0, active: false };
     const maxKnobDistance = 45;
 
+    // لمس وسحب مباشر للتحكم
     window.addEventListener('pointerdown', (e) => {
       if (gameState !== "SAILING") return;
-      // تجاهل إذا ضغط على الخريطة المصغرة أو الأزرار
       if (e.target.closest('.minimap-container') || e.target.closest('#tossBtn') || e.target.closest('#successModal')) return;
 
       touchOrigin = { x: e.clientX, y: e.clientY };
@@ -454,7 +450,9 @@
       floatingJoystick.style.top = `${e.clientY}px`;
       floatingJoystick.style.display = 'block';
       floatingKnob.style.transform = 'translate(0px, 0px)';
-      joystickInput = { x: 0, y: 0 };
+      directMove.active = true;
+      directMove.x = 0;
+      directMove.y = 0;
     });
 
     window.addEventListener('pointermove', (e) => {
@@ -470,14 +468,23 @@
       }
 
       floatingKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-      joystickInput.x = dx / maxKnobDistance;
-      joystickInput.y = dy / maxKnobDistance;
+      
+      // توجيه المتجه المباشر
+      if (dist > 5) {
+        directMove.x = dx / maxKnobDistance;
+        directMove.y = dy / maxKnobDistance;
+      } else {
+        directMove.x = 0;
+        directMove.y = 0;
+      }
     });
 
     const removeFloatingJoystick = () => {
       touchOrigin = null;
       floatingJoystick.style.display = 'none';
-      joystickInput = { x: 0, y: 0 };
+      directMove.active = false;
+      directMove.x = 0;
+      directMove.y = 0;
     };
 
     window.addEventListener('pointerup', removeFloatingJoystick);
@@ -850,17 +857,16 @@
 
     function update() {
       if (gameState === "SAILING") {
-        let maxForward = ship.maxForwardSpeed;
-        let maxReverse = ship.maxReverseSpeed;
-        let turn = ship.turnSpeed;
+        let maxSpd = ship.maxSpeed;
+        let accel = 0.25;
 
         if (isStuckInMud) {
-          maxForward = 0.8;
-          maxReverse = -0.8;
-          turn = 0.015;
-          ship.speed *= 0.85;
+          maxSpd = 1.0;
+          accel = 0.05;
+          ship.speedX *= 0.8;
+          ship.speedY *= 0.8;
 
-          if (Math.abs(ship.speed) > 0.2) {
+          if (Math.hypot(ship.speedX, ship.speedY) > 0.2) {
             mudParticles.push({
               x: ship.worldX + (Math.random() - 0.5) * 20,
               y: ship.worldY + (Math.random() - 0.5) * 20,
@@ -872,30 +878,34 @@
           }
         }
 
-        // استجابة سلسة لموضع الإصبع وسحبه
-        if (joystickInput.y < -0.1) {
-          const targetSpd = Math.abs(joystickInput.y) * maxForward;
-          ship.speed += (targetSpd - ship.speed) * 0.15;
-        } else if (joystickInput.y > 0.1) {
-          const targetSpd = -joystickInput.y * Math.abs(maxReverse);
-          ship.speed += (targetSpd - ship.speed) * 0.15;
+        // المنطق المباشر: التحرك والدوران الفوري باتجاه السحب
+        if (directMove.active && (directMove.x !== 0 || directMove.y !== 0)) {
+          const targetVelX = directMove.x * maxSpd;
+          const targetVelY = directMove.y * maxSpd;
+
+          ship.speedX += (targetVelX - ship.speedX) * accel;
+          ship.speedY += (targetVelY - ship.speedY) * accel;
+
+          // دوران السفينة نحو اتجاه الحركة بسلاسة
+          const targetAngle = Math.atan2(directMove.y, directMove.x);
+          let diff = targetAngle - ship.angle;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          ship.angle += diff * 0.15; // التفاف سريع ومباشر
         } else {
-          ship.speed *= isStuckInMud ? 0.75 : 0.94;
+          ship.speedX *= isStuckInMud ? 0.75 : 0.92;
+          ship.speedY *= isStuckInMud ? 0.75 : 0.92;
         }
 
-        if (Math.abs(joystickInput.x) > 0.1) {
-          ship.angle += joystickInput.x * turn;
-        }
-
-        ship.worldX += Math.cos(ship.angle) * ship.speed;
-        ship.worldY += Math.sin(ship.angle) * ship.speed;
+        ship.worldX += ship.speedX;
+        ship.worldY += ship.speedY;
 
         const inWestCanal = ship.worldX >= canalGeometry.westBank && ship.worldX <= canalGeometry.westCanalEnd;
         const inEastCanal = ship.worldX >= canalGeometry.eastCanalStart && ship.worldX <= canalGeometry.eastBank;
         const inCut = isInCrossCut(ship.worldY) && (ship.worldX >= canalGeometry.westCanalEnd && ship.worldX <= canalGeometry.eastCanalStart);
 
         if (!inWestCanal && !inEastCanal && !inCut) {
-          if (!isStuckInMud) hud.innerText = "⚠️ شحوط في الرمال! حرّك إصبعك للخلف للخروج";
+          if (!isStuckInMud) hud.innerText = "⚠️ شحوط في الرمال! اسحب إصبعك بالاتجاه المعاكس للخروج";
           isStuckInMud = true;
           if (ship.worldX < canalGeometry.westBank - 25) ship.worldX = canalGeometry.westBank - 25;
           if (ship.worldX > canalGeometry.eastBank + 25) ship.worldX = canalGeometry.eastBank + 25;
@@ -904,13 +914,15 @@
           isStuckInMud = false;
         }
 
+        const totalSpeed = Math.hypot(ship.speedX, ship.speedY);
+
         if (audioCtx) {
-          const targetFreq = 40 + Math.abs(ship.speed) * 18;
+          const targetFreq = 40 + totalSpeed * 16;
           engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
-          sandNoiseGain.gain.setTargetAtTime(isStuckInMud && Math.abs(ship.speed) > 0.2 ? 0.18 : 0, audioCtx.currentTime, 0.05);
+          sandNoiseGain.gain.setTargetAtTime(isStuckInMud && totalSpeed > 0.2 ? 0.18 : 0, audioCtx.currentTime, 0.05);
         }
 
-        if (Math.abs(ship.speed) > 0.6 && !isStuckInMud) {
+        if (totalSpeed > 0.6 && !isStuckInMud) {
           ship.wake.push({
             x: ship.worldX - Math.cos(ship.angle) * (ship.height / 2),
             y: ship.worldY - Math.sin(ship.angle) * (ship.height / 2),
@@ -936,18 +948,20 @@
       requestAnimationFrame(update);
     }
 
-    // دعم أزرار الكيبورد للكمبيوتر إن وُجدت
+    // دعم أزرار الكيبورد
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' || e.key === 'w') joystickInput.y = -1;
-      if (e.key === 'ArrowDown' || e.key === 's') joystickInput.y = 1;
-      if (e.key === 'ArrowLeft' || e.key === 'a') joystickInput.x = -1;
-      if (e.key === 'ArrowRight' || e.key === 'd') joystickInput.x = 1;
+      directMove.active = true;
+      if (e.key === 'ArrowUp' || e.key === 'w') directMove.y = -1;
+      if (e.key === 'ArrowDown' || e.key === 's') directMove.y = 1;
+      if (e.key === 'ArrowLeft' || e.key === 'a') directMove.x = -1;
+      if (e.key === 'ArrowRight' || e.key === 'd') directMove.x = 1;
       if (e.key === ' ' && gameState === "AIMING") tossBtn.click();
     });
 
     window.addEventListener('keyup', (e) => {
-      if (['ArrowUp', 'ArrowDown', 'w', 's'].includes(e.key)) joystickInput.y = 0;
-      if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) joystickInput.x = 0;
+      if (['ArrowUp', 'ArrowDown', 'w', 's'].includes(e.key)) directMove.y = 0;
+      if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) directMove.x = 0;
+      if (directMove.x === 0 && directMove.y === 0) directMove.active = false;
     });
 
     update();
