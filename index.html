@@ -28,18 +28,18 @@
     }
     
     .dpworld-logo-box {
-      background: #1e1848;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 12px 24px;
-      border-radius: 18px;
-      margin-bottom: 16px;
+      background: #1c1548;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 16px 24px;
+      border-radius: 20px;
+      margin-bottom: 18px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.45);
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .dpworld-logo-box img {
-      width: 170px;
+    .dpworld-logo-box svg {
+      width: 190px;
       height: auto;
       display: block;
     }
@@ -119,14 +119,14 @@
       white-space: nowrap;
     }
     .hud-logo {
-      background: #1e1848;
-      padding: 2px 6px;
+      background: #1c1548;
+      padding: 3px 8px;
       border-radius: 6px;
       display: flex;
       align-items: center;
     }
-    .hud-logo img {
-      width: 65px;
+    .hud-logo svg {
+      width: 70px;
       height: auto;
       display: block;
     }
@@ -268,10 +268,30 @@
 </head>
 <body>
 
-  <!-- Menu Screen with DP World Logo -->
+  <!-- Menu Screen with Native DP World SVG Logo -->
   <div id="menuScreen">
     <div class="dpworld-logo-box">
-      <img id="mainLogo" alt="DP World Logo">
+      <svg viewBox="0 0 340 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="dpPinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ff2a6d" />
+            <stop offset="100%" stop-color="#9b1b59" />
+          </linearGradient>
+          <linearGradient id="dpGreenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00e676" />
+            <stop offset="50%" stop-color="#00b0ff" />
+            <stop offset="100%" stop-color="#00e676" />
+          </linearGradient>
+        </defs>
+        <!-- Top Pink/Red Arc -->
+        <path d="M 125 78 C 120 40 180 30 198 42 C 160 52 142 75 140 92 Z" fill="url(#dpPinkGrad)" />
+        <!-- Middle Flowing Cyan/Green Ribbon -->
+        <path d="M 68 106 C 92 88 128 116 168 114 C 205 110 228 80 234 68 C 240 88 226 122 195 132 C 158 142 108 122 68 106 Z" fill="url(#dpGreenGrad)" />
+        <!-- Bottom White Crescent -->
+        <path d="M 128 126 C 160 148 210 134 242 94 C 248 116 220 152 178 152 C 152 152 135 138 128 126 Z" fill="#ffffff" />
+        <!-- DP WORLD Text -->
+        <text x="170" y="198" font-family="'Segoe UI', -apple-system, sans-serif" font-weight="900" font-size="38" fill="#ffffff" text-anchor="middle" letter-spacing="2">DP WORLD</text>
+      </svg>
     </div>
     <h1>DP World Beverage Menu</h1>
     <p>Select your drink, sail through the Suez Canal, and dock to order.</p>
@@ -279,10 +299,26 @@
     <button id="startSailingBtn" disabled>Start Sailing 🚢</button>
   </div>
 
-  <!-- In-game HUD -->
+  <!-- In-game HUD with DP World Logo -->
   <div class="hud" id="gameHud">
     <div class="hud-logo">
-      <img id="hudLogo" alt="DP World">
+      <svg viewBox="0 0 340 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="dpPinkGradHud" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ff2a6d" />
+            <stop offset="100%" stop-color="#9b1b59" />
+          </linearGradient>
+          <linearGradient id="dpGreenGradHud" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00e676" />
+            <stop offset="50%" stop-color="#00b0ff" />
+            <stop offset="100%" stop-color="#00e676" />
+          </linearGradient>
+        </defs>
+        <path d="M 125 78 C 120 40 180 30 198 42 C 160 52 142 75 140 92 Z" fill="url(#dpPinkGradHud)" />
+        <path d="M 68 106 C 92 88 128 116 168 114 C 205 110 228 80 234 68 C 240 88 226 122 195 132 C 158 142 108 122 68 106 Z" fill="url(#dpGreenGradHud)" />
+        <path d="M 128 126 C 160 148 210 134 242 94 C 248 116 220 152 178 152 C 152 152 135 138 128 126 Z" fill="#ffffff" />
+        <text x="170" y="198" font-family="'Segoe UI', -apple-system, sans-serif" font-weight="900" font-size="38" fill="#ffffff" text-anchor="middle" letter-spacing="2">DP WORLD</text>
+      </svg>
     </div>
     <span id="hudText">Touch and drag anywhere to navigate the vessel</span>
   </div>
@@ -313,23 +349,6 @@
   </div>
 
   <script>
-    // Embedded Vector DP World Logo
-    const dpWorldSvgData = "data:image/svg+xml;utf8," + encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 240" width="100%" height="100%">
-        <!-- Top Pink/Crimson Crescent -->
-        <path d="M 120 70 A 55 55 0 0 1 175 70 A 45 45 0 0 0 135 110 Z" fill="#e91e63" />
-        <!-- Middle Green Wave -->
-        <path d="M 60 115 Q 95 90 140 120 T 215 80 Q 220 105 190 125 T 100 135 Z" fill="#00d285" />
-        <!-- Bottom White Crescent -->
-        <path d="M 115 135 A 60 60 0 0 0 220 95 A 68 68 0 0 1 125 155 Z" fill="#ffffff" />
-        <!-- DP WORLD Text -->
-        <text x="150" y="210" font-family="'Segoe UI', -apple-system, sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">DP WORLD</text>
-      </svg>
-    `);
-
-    document.getElementById('mainLogo').src = dpWorldSvgData;
-    document.getElementById('hudLogo').src = dpWorldSvgData;
-
     const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID";
 
     const canvas = document.getElementById('gameCanvas');
@@ -360,7 +379,7 @@
       height = canvas.height = window.innerHeight;
     });
 
-    /* Audio Synthesizer Engine */
+    /* Web Audio Synthesizer */
     let audioCtx = null, engineOsc = null, engineGain = null, waveGain = null, sandNoiseGain = null;
     let hornOsc1 = null, hornOsc2 = null, hornGain = null;
     let isHonking = false;
@@ -512,7 +531,6 @@
       });
     }
 
-    // Drinks Catalog
     const drinksList = [
       { id: 1, name: "Tea", icon: "🍵", color: "#6d4c41", worldY: -700, side: "west" },
       { id: 2, name: "Coffee", icon: "☕", color: "#4e342e", worldY: -1400, side: "east" },
