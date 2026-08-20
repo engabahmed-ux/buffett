@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>قائمة مشروبات أجيلتي - Agility</title>
+  <title>DP World Beverage Menu - Suez Canal</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       overflow: hidden;
       background-color: #d2b48c;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
       user-select: none;
       touch-action: none;
     }
@@ -17,7 +17,7 @@
     #menuScreen {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at center, #1b263b 0%, #0d1b2a 100%);
+      background: radial-gradient(circle at center, #261f5c 0%, #15103a 100%);
       color: #fff;
       display: flex;
       flex-direction: column;
@@ -27,24 +27,25 @@
       padding: 20px;
     }
     
-    .agility-logo-box {
-      background: #ffffff;
-      padding: 10px 20px;
-      border-radius: 16px;
-      margin-bottom: 15px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    .dpworld-logo-box {
+      background: #1e1848;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 12px 24px;
+      border-radius: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .agility-logo-box img {
-      width: 200px;
+    .dpworld-logo-box img {
+      width: 170px;
       height: auto;
       display: block;
     }
 
-    #menuScreen h1 { font-size: 22px; margin-bottom: 6px; color: #ffb703; text-align: center; }
-    #menuScreen p { font-size: 13px; color: #b0bec5; margin-bottom: 20px; text-align: center; }
+    #menuScreen h1 { font-size: 22px; margin-bottom: 6px; color: #00d285; text-align: center; font-weight: 700; }
+    #menuScreen p { font-size: 13px; color: #cbd5e1; margin-bottom: 22px; text-align: center; max-width: 290px; line-height: 1.4; }
     
     .drink-grid {
       display: grid;
@@ -55,37 +56,38 @@
       margin-bottom: 24px;
     }
     .drink-card {
-      background: rgba(255, 255, 255, 0.08);
-      border: 2px solid rgba(255, 255, 255, 0.15);
-      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
       padding: 16px 12px;
       text-align: center;
       cursor: pointer;
       transition: all 0.25s ease;
     }
     .drink-card.selected {
-      border-color: #ffb703;
-      background: rgba(255, 183, 3, 0.25);
+      border-color: #00d285;
+      background: rgba(0, 210, 133, 0.18);
       transform: scale(1.04);
-      box-shadow: 0 0 15px rgba(255, 183, 3, 0.4);
+      box-shadow: 0 0 16px rgba(0, 210, 133, 0.4);
     }
     .drink-card .icon { font-size: 32px; margin-bottom: 6px; }
-    .drink-card .name { font-size: 16px; font-weight: bold; }
+    .drink-card .name { font-size: 15px; font-weight: 600; color: #fff; }
     
     #startSailingBtn {
       padding: 14px 38px;
-      background: linear-gradient(135deg, #ffb703, #fb8500);
-      color: #001e3d;
-      font-size: 17px;
-      font-weight: bold;
+      background: linear-gradient(135deg, #00d285, #009e60);
+      color: #0c1829;
+      font-size: 16px;
+      font-weight: 700;
       border: none;
       border-radius: 30px;
-      box-shadow: 0 6px 18px rgba(251, 133, 0, 0.4);
+      box-shadow: 0 6px 20px rgba(0, 210, 133, 0.35);
       cursor: pointer;
+      transition: opacity 0.2s;
     }
     #startSailingBtn:disabled {
-      background: #546e7a;
-      color: #90a4ae;
+      background: #334155;
+      color: #64748b;
       box-shadow: none;
       cursor: not-allowed;
     }
@@ -101,30 +103,30 @@
       top: 15px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(10, 37, 64, 0.92);
+      background: rgba(21, 16, 58, 0.94);
       backdrop-filter: blur(8px);
       color: #fff;
       padding: 6px 16px;
       border-radius: 25px;
       font-size: 13px;
-      font-weight: bold;
+      font-weight: 600;
       box-shadow: 0 6px 15px rgba(0,0,0,0.3);
       z-index: 5;
       display: flex;
       align-items: center;
       gap: 10px;
-      border: 1px solid rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.15);
       white-space: nowrap;
     }
     .hud-logo {
-      background: #fff;
+      background: #1e1848;
       padding: 2px 6px;
       border-radius: 6px;
       display: flex;
       align-items: center;
     }
     .hud-logo img {
-      width: 75px;
+      width: 65px;
       height: auto;
       display: block;
     }
@@ -135,22 +137,22 @@
       left: 20px;
       width: 65px;
       height: 65px;
-      background: linear-gradient(135deg, #ffb703, #fb8500);
+      background: linear-gradient(135deg, #00d285, #009e60);
       border: 3px solid #fff;
       border-radius: 50%;
       font-size: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.35);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
       z-index: 25;
       cursor: pointer;
       touch-action: none;
     }
     .horn-btn.active {
       transform: scale(0.92);
-      background: #d84315;
-      box-shadow: 0 0 20px #ffb703;
+      background: #007a48;
+      box-shadow: 0 0 20px #00d285;
     }
 
     .minimap-container {
@@ -159,8 +161,8 @@
       right: 15px;
       width: 75px;
       height: 135px;
-      background: rgba(10, 37, 64, 0.85);
-      border: 2px solid #ffb703;
+      background: rgba(21, 16, 58, 0.9);
+      border: 2px solid #00d285;
       border-radius: 12px;
       overflow: hidden;
       z-index: 10;
@@ -176,7 +178,7 @@
       height: 100px;
       margin-left: -50px;
       margin-top: -50px;
-      background: rgba(10, 37, 64, 0.4);
+      background: rgba(21, 16, 58, 0.45);
       border: 2px solid rgba(255, 255, 255, 0.6);
       border-radius: 50%;
       z-index: 15;
@@ -191,7 +193,7 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      background: linear-gradient(135deg, #0288d1, #01579b);
+      background: linear-gradient(135deg, #00d285, #007a48);
       border: 2px solid #fff;
       border-radius: 50%;
       box-shadow: 0 4px 10px rgba(0,0,0,0.4);
@@ -207,8 +209,8 @@
       padding: 14px 32px;
       background: linear-gradient(135deg, #d32f2f, #b71c1c);
       color: white;
-      font-size: 17px;
-      font-weight: bold;
+      font-size: 16px;
+      font-weight: 700;
       border: 2px solid #fff;
       border-radius: 30px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.35);
@@ -230,22 +232,22 @@
       z-index: 30;
       width: 85%;
       max-width: 320px;
-      border: 3px solid #ffb703;
+      border: 3px solid #00d285;
     }
-    .success-modal h3 { color: #0d47a1; margin-bottom: 8px; }
-    .success-modal p { color: #555; font-size: 14px; margin-bottom: 16px; }
+    .success-modal h3 { color: #15103a; margin-bottom: 8px; font-size: 18px; }
+    .success-modal p { color: #475569; font-size: 14px; margin-bottom: 16px; line-height: 1.4; }
     .success-btn {
       width: 100%;
       padding: 12px;
       margin-top: 8px;
       border: none;
       border-radius: 10px;
-      font-size: 15px;
-      font-weight: bold;
+      font-size: 14px;
+      font-weight: 700;
       cursor: pointer;
     }
-    .btn-another { background: #ffb703; color: #001e3d; }
-    .btn-finish { background: #eceff1; color: #37474f; }
+    .btn-another { background: #00d285; color: #0c1829; }
+    .btn-finish { background: #f1f5f9; color: #334155; }
 
     .status-toast {
       display: none;
@@ -253,12 +255,12 @@
       top: 65px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(198, 40, 40, 0.95);
+      background: rgba(220, 38, 38, 0.95);
       color: white;
       padding: 8px 18px;
       border-radius: 20px;
       font-size: 13px;
-      font-weight: bold;
+      font-weight: 600;
       z-index: 20;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
@@ -266,29 +268,30 @@
 </head>
 <body>
 
-  <!-- شاشة البداية مع لوجو Agility الرسمي المدمج -->
+  <!-- Menu Screen with DP World Logo -->
   <div id="menuScreen">
-    <div class="agility-logo-box">
-      <img id="mainLogo" alt="Agility Logo">
+    <div class="dpworld-logo-box">
+      <img id="mainLogo" alt="DP World Logo">
     </div>
-    <h1>قائمة مشروبات أجيلتي</h1>
-    <p>اختر مشروبك المفضل وقد السفينة للرسو واستلامه</p>
+    <h1>DP World Beverage Menu</h1>
+    <p>Select your drink, sail through the Suez Canal, and dock to order.</p>
     <div class="drink-grid" id="drinkGrid"></div>
-    <button id="startSailingBtn" disabled>ابدأ رحلة الإبحار 🚢</button>
+    <button id="startSailingBtn" disabled>Start Sailing 🚢</button>
   </div>
 
+  <!-- In-game HUD -->
   <div class="hud" id="gameHud">
     <div class="hud-logo">
-      <img id="hudLogo" alt="Agility">
+      <img id="hudLogo" alt="DP World">
     </div>
-    <span id="hudText">اسحب في أي مكان بالشاشة لتوجيه السفينة</span>
+    <span id="hudText">Touch and drag anywhere to navigate the vessel</span>
   </div>
   
-  <div class="status-toast" id="statusToast">❌ لم يصب الهلب! حاول مجدداً</div>
+  <div class="status-toast" id="statusToast">❌ Anchor missed the dock! Try again</div>
   
   <canvas id="gameCanvas"></canvas>
 
-  <button class="horn-btn" id="hornBtn" title="زمارة السفينة">📢</button>
+  <button class="horn-btn" id="hornBtn" title="Ship Foghorn">📢</button>
 
   <div class="minimap-container">
     <canvas id="minimapCanvas" width="75" height="135"></canvas>
@@ -298,37 +301,34 @@
     <div id="floatingKnob"></div>
   </div>
 
-  <button class="toss-btn" id="tossBtn">⚓ ارمِ الهلب للرسو!</button>
+  <button class="toss-btn" id="tossBtn">⚓ Drop Anchor to Dock!</button>
 
+  <!-- Success Modal -->
   <div class="success-modal" id="successModal">
     <div style="font-size: 40px; margin-bottom: 5px;">🎉</div>
-    <h3>تم الرسو بنجاح!</h3>
+    <h3>Vessel Docked Successfully!</h3>
     <p id="successMessage"></p>
-    <button class="success-btn btn-another" id="anotherDrinkBtn">طلب مشروب آخر 🍹</button>
-    <button class="success-btn btn-finish" id="finishBtn">متابعة الإبحار ⚓</button>
+    <button class="success-btn btn-another" id="anotherDrinkBtn">Order Another Drink 🍹</button>
+    <button class="success-btn btn-finish" id="finishBtn">Continue Sailing ⚓</button>
   </div>
 
   <script>
-    // تضمين رسم لوجو Agility الداخلي المباشر
-    const agilitySvgData = "data:image/svg+xml;utf8," + encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 100" width="100%" height="100%">
-        <g transform="translate(95, 20)">
-          <!-- منقار ورأس الصقر -->
-          <path d="M10,25 C5,22 8,16 22,12 C32,8 42,7 45,12 C38,16 22,22 10,25 Z" fill="#FDB813"/>
-          <path d="M30,8 C40,2 52,1 60,7 C50,11 40,12 30,8 Z" fill="#F37023"/>
-          <!-- الجناح الانسيابي الممتد البرتقالي -->
-          <path d="M38,15 C70,9 110,24 145,28 C175,32 205,22 218,25 C185,42 140,40 108,30 C82,22 55,27 38,15 Z" fill="#F37023"/>
-          <path d="M52,20 C88,14 130,30 160,32 C125,38 82,34 52,20 Z" fill="#FF8D24"/>
-          <!-- القوس الأبيض الانسيابي لعين وجسم الصقر -->
-          <path d="M40,17 C52,12 72,17 85,22 C65,25 50,22 40,17 Z" fill="#FFFFFF"/>
-        </g>
-        <!-- كلمة Agility النصية الأصلية باللون العنابي -->
-        <text x="5" y="68" font-family="'Times New Roman', Times, Georgia, serif" font-weight="bold" font-style="italic" font-size="52" fill="#8B1D2C">Agility</text>
+    // Embedded Vector DP World Logo
+    const dpWorldSvgData = "data:image/svg+xml;utf8," + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 240" width="100%" height="100%">
+        <!-- Top Pink/Crimson Crescent -->
+        <path d="M 120 70 A 55 55 0 0 1 175 70 A 45 45 0 0 0 135 110 Z" fill="#e91e63" />
+        <!-- Middle Green Wave -->
+        <path d="M 60 115 Q 95 90 140 120 T 215 80 Q 220 105 190 125 T 100 135 Z" fill="#00d285" />
+        <!-- Bottom White Crescent -->
+        <path d="M 115 135 A 60 60 0 0 0 220 95 A 68 68 0 0 1 125 155 Z" fill="#ffffff" />
+        <!-- DP WORLD Text -->
+        <text x="150" y="210" font-family="'Segoe UI', -apple-system, sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">DP WORLD</text>
       </svg>
     `);
 
-    document.getElementById('mainLogo').src = agilitySvgData;
-    document.getElementById('hudLogo').src = agilitySvgData;
+    document.getElementById('mainLogo').src = dpWorldSvgData;
+    document.getElementById('hudLogo').src = dpWorldSvgData;
 
     const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID";
 
@@ -360,6 +360,7 @@
       height = canvas.height = window.innerHeight;
     });
 
+    /* Audio Synthesizer Engine */
     let audioCtx = null, engineOsc = null, engineGain = null, waveGain = null, sandNoiseGain = null;
     let hornOsc1 = null, hornOsc2 = null, hornGain = null;
     let isHonking = false;
@@ -511,11 +512,12 @@
       });
     }
 
+    // Drinks Catalog
     const drinksList = [
-      { id: 1, name: "شاي", icon: "🍵", color: "#6d4c41", worldY: -700, side: "west" },
-      { id: 2, name: "قهوة", icon: "☕", color: "#4e342e", worldY: -1400, side: "east" },
-      { id: 3, name: "مياه", icon: "🧊", color: "#0288d1", worldY: -2100, side: "west" },
-      { id: 4, name: "عصير", icon: "🍹", color: "#ff8f00", worldY: -2800, side: "east" }
+      { id: 1, name: "Tea", icon: "🍵", color: "#6d4c41", worldY: -700, side: "west" },
+      { id: 2, name: "Coffee", icon: "☕", color: "#4e342e", worldY: -1400, side: "east" },
+      { id: 3, name: "Water", icon: "🧊", color: "#0288d1", worldY: -2100, side: "west" },
+      { id: 4, name: "Juice", icon: "🍹", color: "#ff8f00", worldY: -2800, side: "east" }
     ];
 
     let targetDrink = null;
@@ -546,7 +548,7 @@
       setTimeout(stopHorn, 600);
       menuScreen.style.display = 'none';
       gameState = "SAILING";
-      hudText.innerText = `وجهتك: رصيف (${targetDrink.name})`;
+      hudText.innerText = `Destination: ${targetDrink.name} Pier`;
     };
 
     anotherDrinkBtn.onclick = () => {
@@ -561,7 +563,7 @@
     finishBtn.onclick = () => {
       successModal.style.display = 'none';
       gameState = "SAILING";
-      hudText.innerText = "تابع الإبحار والاستمتاع بالمجرى الملاحي";
+      hudText.innerText = "Enjoy sailing the Suez Canal";
     };
 
     const ship = {
@@ -758,19 +760,19 @@
         if (renderY > -120 && renderY < height + 120) {
           ctx.save();
           if (isSelectedTarget) {
-            ctx.shadowColor = '#ffb703';
+            ctx.shadowColor = '#00d285';
             ctx.shadowBlur = 18;
           }
 
           ctx.fillStyle = '#ffffff';
-          ctx.strokeStyle = isSelectedTarget ? '#ffb703' : st.color;
+          ctx.strokeStyle = isSelectedTarget ? '#00d285' : st.color;
           ctx.lineWidth = isSelectedTarget ? 4 : 2.5;
           ctx.beginPath();
           ctx.roundRect(drawX, renderY - dockHeight / 2, dockWidth, dockHeight, 12);
           ctx.fill();
           ctx.stroke();
 
-          ctx.fillStyle = isSelectedTarget ? '#ffb703' : st.color;
+          ctx.fillStyle = isSelectedTarget ? '#00d285' : st.color;
           ctx.beginPath();
           ctx.roundRect(drawX, renderY - dockHeight / 2, dockWidth, 8, [12, 12, 0, 0]);
           ctx.fill();
@@ -779,8 +781,8 @@
           ctx.textAlign = 'center';
           ctx.fillText(st.icon, drawX + dockWidth / 2, renderY + 4);
 
-          ctx.fillStyle = '#0a2540';
-          ctx.font = 'bold 11px Tahoma';
+          ctx.fillStyle = '#15103a';
+          ctx.font = 'bold 12px Segoe UI, sans-serif';
           ctx.fillText(st.name, drawX + dockWidth / 2, renderY + 22);
 
           ctx.restore();
@@ -825,7 +827,7 @@
       ctx.beginPath();
       ctx.roundRect(-ship.width / 3.5, -ship.height / 5, ship.width / 1.75, ship.height / 2.3, 4);
       ctx.fill();
-      ctx.strokeStyle = '#0d47a1';
+      ctx.strokeStyle = '#15103a';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
@@ -852,7 +854,7 @@
         const targetProgress = (targetDrink.worldY - 100) / (totalY - 100);
         const targetMarkerY = 120 - (targetProgress * 105);
         const targetMarkerX = targetDrink.side === 'west' ? 22 : 53;
-        miniCtx.fillStyle = '#ffb703';
+        miniCtx.fillStyle = '#00d285';
         miniCtx.beginPath();
         miniCtx.arc(targetMarkerX, Math.max(12, Math.min(125, targetMarkerY)), 5, 0, Math.PI * 2);
         miniCtx.fill();
@@ -876,7 +878,7 @@
 
       removeFloatingJoystick();
       tossBtn.style.display = 'block';
-      hudText.innerText = `ارمِ الهلب لتثبيت السفينة في حلقة رصيف (${station.name})!`;
+      hudText.innerText = `Drop anchor onto the ${station.name} bollard!`;
     }
 
     function drawAnchorMinigame() {
@@ -886,14 +888,14 @@
 
       ctx.save();
       ctx.lineWidth = 4;
-      ctx.strokeStyle = '#f57c00';
-      ctx.fillStyle = 'rgba(255, 179, 0, 0.35)';
+      ctx.strokeStyle = '#00d285';
+      ctx.fillStyle = 'rgba(0, 210, 133, 0.35)';
       ctx.beginPath();
       ctx.arc(anchorGame.targetX, anchorGame.targetY, anchorGame.targetRadius, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
-      ctx.fillStyle = '#37474f';
+      ctx.fillStyle = '#334155';
       ctx.beginPath();
       ctx.arc(anchorGame.targetX, anchorGame.targetY, 9, 0, Math.PI * 2);
       ctx.fill();
@@ -910,7 +912,7 @@
       const currentAngle = baseAngle + anchorGame.angle;
 
       if (gameState === "AIMING") {
-        ctx.strokeStyle = 'rgba(255, 235, 59, 0.75)';
+        ctx.strokeStyle = 'rgba(0, 210, 133, 0.85)';
         ctx.lineWidth = 2;
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
@@ -924,7 +926,7 @@
       const anchorX = startX + Math.cos(currentAngle) * currentDist;
       const anchorY = startY + Math.sin(currentAngle) * currentDist;
 
-      ctx.strokeStyle = '#4e342e';
+      ctx.strokeStyle = '#475569';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(startX, startY);
@@ -972,24 +974,24 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          الطلب: selected,
-          الجهة: "قائمة مشروبات أجيلتي - بوفيه قناة السويس",
-          الوقت: new Date().toLocaleTimeString('ar-EG')
+          Item: selected,
+          Brand: "DP World Beverage Service - Suez Canal",
+          Timestamp: new Date().toLocaleTimeString('en-US')
         })
       });
 
-      successMessage.innerText = `تم تثبيت السفينة بنجاح وإرسال طلب (${selected}) لطاقم الصالون!`;
+      successMessage.innerText = `Your vessel is docked and your ${selected} request has been sent to the lounge team!`;
       successModal.style.display = 'block';
     }
 
     function handleFailure() {
       gameState = "DOCKED";
-      showToast("❌ لم يصب الهلب حلقة الرسو! حاول مجدداً");
+      showToast("❌ Anchor missed the dock! Try again");
       setTimeout(() => {
         gameState = "AIMING";
         anchorGame.anchorDist = 0;
         tossBtn.style.display = 'block';
-        hudText.innerText = `ركز وحاول مجدداً رمي الهلب في الحلقة!`;
+        hudText.innerText = `Focus and aim for the target ring!`;
       }, 1000);
     }
 
@@ -1041,12 +1043,12 @@
         const inCut = isInCrossCut(ship.worldY) && (ship.worldX >= canalGeometry.westCanalEnd && ship.worldX <= canalGeometry.eastCanalStart);
 
         if (!inWestCanal && !inEastCanal && !inCut) {
-          if (!isStuckInMud) hudText.innerText = "⚠️ شحوط في الرمال! اسحب إصبعك للخروج";
+          if (!isStuckInMud) hudText.innerText = "⚠️ Grounded in sand! Drag backwards to free the ship";
           isStuckInMud = true;
           if (ship.worldX < canalGeometry.westBank - 25) ship.worldX = canalGeometry.westBank - 25;
           if (ship.worldX > canalGeometry.eastBank + 25) ship.worldX = canalGeometry.eastBank + 25;
         } else {
-          if (isStuckInMud && targetDrink) hudText.innerText = `وجهتك: رصيف (${targetDrink.name})`;
+          if (isStuckInMud && targetDrink) hudText.innerText = `Destination: ${targetDrink.name} Pier`;
           isStuckInMud = false;
         }
 
