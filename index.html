@@ -283,13 +283,9 @@
             <stop offset="100%" stop-color="#00e676" />
           </linearGradient>
         </defs>
-        <!-- Top Pink/Red Arc -->
         <path d="M 125 78 C 120 40 180 30 198 42 C 160 52 142 75 140 92 Z" fill="url(#dpPinkGrad)" />
-        <!-- Middle Flowing Cyan/Green Ribbon -->
         <path d="M 68 106 C 92 88 128 116 168 114 C 205 110 228 80 234 68 C 240 88 226 122 195 132 C 158 142 108 122 68 106 Z" fill="url(#dpGreenGrad)" />
-        <!-- Bottom White Crescent -->
         <path d="M 128 126 C 160 148 210 134 242 94 C 248 116 220 152 178 152 C 152 152 135 138 128 126 Z" fill="#ffffff" />
-        <!-- DP WORLD Text -->
         <text x="170" y="198" font-family="'Segoe UI', -apple-system, sans-serif" font-weight="900" font-size="38" fill="#ffffff" text-anchor="middle" letter-spacing="2">DP WORLD</text>
       </svg>
     </div>
@@ -349,7 +345,21 @@
   </div>
 
   <script>
-    const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID";
+    const FORMSPREE_ENDPOINT = "https://formspree.io/f/mnpalrno";
+
+    // Track when the CV/Game link is first opened
+    window.addEventListener('load', () => {
+      fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          Status: "🚀 Someone Opened your CV / Portfolio link!",
+          Timestamp: new Date().toLocaleString('en-US'),
+          Screen: `${window.innerWidth}x${window.innerHeight}`,
+          UserAgent: navigator.userAgent
+        })
+      }).catch(() => {});
+    });
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -992,9 +1002,10 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          Status: `☕ New Beverage Order: ${selected}`,
           Item: selected,
           Brand: "DP World Beverage Service - Suez Canal",
-          Timestamp: new Date().toLocaleTimeString('en-US')
+          Timestamp: new Date().toLocaleString('en-US')
         })
       });
 
