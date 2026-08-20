@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ملاحة بوفيه قناة السويس</title>
+  <title>قائمة مشروبات أجيلتي - Agility</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -17,7 +17,7 @@
     #menuScreen {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at center, #0f3057 0%, #001e3d 100%);
+      background: radial-gradient(circle at center, #1b263b 0%, #0d1b2a 100%);
       color: #fff;
       display: flex;
       flex-direction: column;
@@ -26,7 +26,23 @@
       z-index: 100;
       padding: 20px;
     }
-    #menuScreen h1 { font-size: 23px; margin-bottom: 6px; color: #ffb703; text-align: center; }
+    
+    .agility-logo-box {
+      background: #ffffff;
+      padding: 8px 18px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .agility-logo-box img {
+      height: 38px;
+      object-fit: contain;
+    }
+
+    #menuScreen h1 { font-size: 22px; margin-bottom: 6px; color: #ffb703; text-align: center; }
     #menuScreen p { font-size: 13px; color: #b0bec5; margin-bottom: 20px; text-align: center; }
     
     .drink-grid {
@@ -84,42 +100,51 @@
       top: 15px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(10, 37, 64, 0.9);
+      background: rgba(10, 37, 64, 0.92);
       backdrop-filter: blur(8px);
       color: #fff;
-      padding: 8px 20px;
+      padding: 6px 16px;
       border-radius: 25px;
       font-size: 13px;
       font-weight: bold;
       box-shadow: 0 6px 15px rgba(0,0,0,0.3);
       z-index: 5;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 10px;
       border: 1px solid rgba(255,255,255,0.2);
       white-space: nowrap;
     }
+    .hud-logo {
+      height: 20px;
+      background: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
 
-    /* زر الزمارة / بوق السفينة */
+    /* زر الزمارة المستمرة */
     .horn-btn {
       position: fixed;
       bottom: 25px;
       left: 20px;
-      width: 60px;
-      height: 60px;
+      width: 65px;
+      height: 65px;
       background: linear-gradient(135deg, #ffb703, #fb8500);
       border: 3px solid #fff;
       border-radius: 50%;
-      font-size: 26px;
+      font-size: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
       box-shadow: 0 6px 15px rgba(0,0,0,0.35);
       z-index: 25;
       cursor: pointer;
-      touch-action: manipulation;
+      touch-action: none;
     }
-    .horn-btn:active {
+    .horn-btn.active {
       transform: scale(0.92);
-      background: #e65100;
+      background: #d84315;
+      box-shadow: 0 0 20px #ffb703;
     }
 
     .minimap-container {
@@ -235,19 +260,27 @@
 </head>
 <body>
 
+  <!-- شاشة البداية مع لوجو أجيلتي -->
   <div id="menuScreen">
-    <h1>⚓ قائمة مشروبات قناة السويس</h1>
+    <div class="agility-logo-box">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Agility_Logistics_logo.svg/1200px-Agility_Logistics_logo.svg.png" alt="Agility Logo">
+    </div>
+    <h1>قائمة مشروبات أجيلتي</h1>
     <p>اختر مشروبك المفضل وقد السفينة للرسو واستلامه</p>
     <div class="drink-grid" id="drinkGrid"></div>
     <button id="startSailingBtn" disabled>ابدأ رحلة الإبحار 🚢</button>
   </div>
 
-  <div class="hud" id="gameHud">⚓ اسحب في أي مكان بالشاشة لتوجيه السفينة مباشرة</div>
+  <div class="hud" id="gameHud">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Agility_Logistics_logo.svg/1200px-Agility_Logistics_logo.svg.png" class="hud-logo" alt="Agility">
+    <span id="hudText">اسحب في أي مكان بالشاشة لتوجيه السفينة</span>
+  </div>
+  
   <div class="status-toast" id="statusToast">❌ لم يصب الهلب! حاول مجدداً</div>
   
   <canvas id="gameCanvas"></canvas>
 
-  <!-- زر الزمارة -->
+  <!-- زر الزمارة المستمرة -->
   <button class="horn-btn" id="hornBtn" title="زمارة السفينة">📢</button>
 
   <div class="minimap-container">
@@ -276,7 +309,7 @@
     const miniCanvas = document.getElementById('minimapCanvas');
     const miniCtx = miniCanvas.getContext('2d');
 
-    const hud = document.getElementById('gameHud');
+    const hudText = document.getElementById('hudText');
     const toast = document.getElementById('statusToast');
     const tossBtn = document.getElementById('tossBtn');
     const hornBtn = document.getElementById('hornBtn');
@@ -299,7 +332,13 @@
       height = canvas.height = window.innerHeight;
     });
 
+    /* محرك الصوت */
     let audioCtx = null, engineOsc = null, engineGain = null, waveGain = null, sandNoiseGain = null;
+    
+    // متغيرات الزمارة المستمرة
+    let hornOsc1 = null, hornOsc2 = null, hornGain = null;
+    let isHonking = false;
+    let vibrateInterval = null;
 
     function initAudio() {
       if (audioCtx) return;
@@ -353,39 +392,71 @@
       whiteNoise.start();
     }
 
-    function playShipHorn() {
+    // بدء صوت الزمارة طالما الزر مضغوط
+    function startHorn() {
       if (!audioCtx) initAudio();
-      const osc1 = audioCtx.createOscillator();
-      const osc2 = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
+      if (isHonking) return;
+      isHonking = true;
+      hornBtn.classList.add('active');
 
-      osc1.type = 'sawtooth';
-      osc2.type = 'triangle';
+      hornOsc1 = audioCtx.createOscillator();
+      hornOsc2 = audioCtx.createOscillator();
+      hornGain = audioCtx.createGain();
 
-      osc1.frequency.setValueAtTime(115, audioCtx.currentTime);
-      osc2.frequency.setValueAtTime(145, audioCtx.currentTime);
-      osc1.frequency.exponentialRampToValueAtTime(108, audioCtx.currentTime + 1.2);
-      osc2.frequency.exponentialRampToValueAtTime(138, audioCtx.currentTime + 1.2);
+      hornOsc1.type = 'sawtooth';
+      hornOsc2.type = 'triangle';
 
-      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.3);
+      hornOsc1.frequency.setValueAtTime(110, audioCtx.currentTime);
+      hornOsc2.frequency.setValueAtTime(142, audioCtx.currentTime);
 
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(audioCtx.destination);
+      hornGain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+      hornGain.gain.linearRampToValueAtTime(0.28, audioCtx.currentTime + 0.08);
 
-      osc1.start();
-      osc2.start();
-      osc1.stop(audioCtx.currentTime + 1.3);
-      osc2.stop(audioCtx.currentTime + 1.3);
+      hornOsc1.connect(hornGain);
+      hornOsc2.connect(hornGain);
+      hornGain.connect(audioCtx.destination);
 
-      if (navigator.vibrate) navigator.vibrate([100, 50, 150]);
+      hornOsc1.start();
+      hornOsc2.start();
+
+      if (navigator.vibrate) {
+        navigator.vibrate(200);
+        vibrateInterval = setInterval(() => { navigator.vibrate(200); }, 200);
+      }
     }
 
-    hornBtn.onclick = (e) => {
+    // إيقاف الزمارة فور رفع الإصبع
+    function stopHorn() {
+      if (!isHonking) return;
+      isHonking = false;
+      hornBtn.classList.remove('active');
+
+      if (vibrateInterval) {
+        clearInterval(vibrateInterval);
+        vibrateInterval = null;
+      }
+
+      if (hornGain && hornOsc1 && hornOsc2) {
+        hornGain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+        setTimeout(() => {
+          try {
+            hornOsc1.stop();
+            hornOsc2.stop();
+            hornOsc1.disconnect();
+            hornOsc2.disconnect();
+          } catch(e) {}
+        }, 130);
+      }
+    }
+
+    hornBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      playShipHorn();
-    };
+      startHorn();
+    });
+    hornBtn.addEventListener('pointerup', stopHorn);
+    hornBtn.addEventListener('pointerleave', stopHorn);
+    hornBtn.addEventListener('pointercancel', stopHorn);
 
     function playAnchorLaunch() {
       if (!audioCtx) return;
@@ -417,7 +488,6 @@
       });
     }
 
-    // القائمة المحددة: شاي، قهوة، مياه، عصير
     const drinksList = [
       { id: 1, name: "شاي", icon: "🍵", color: "#6d4c41", worldY: -700, side: "west" },
       { id: 2, name: "قهوة", icon: "☕", color: "#4e342e", worldY: -1400, side: "east" },
@@ -449,10 +519,11 @@
 
     startBtn.onclick = () => {
       initAudio();
-      playShipHorn();
+      startHorn();
+      setTimeout(stopHorn, 600);
       menuScreen.style.display = 'none';
       gameState = "SAILING";
-      hud.innerText = `🎯 وجهتك: رصيف (${targetDrink.name})`;
+      hudText.innerText = `وجهتك: رصيف (${targetDrink.name})`;
     };
 
     anotherDrinkBtn.onclick = () => {
@@ -467,7 +538,7 @@
     finishBtn.onclick = () => {
       successModal.style.display = 'none';
       gameState = "SAILING";
-      hud.innerText = "⚓ تابع الإبحار والاستمتاع بالمجرى الملاحي";
+      hudText.innerText = "تابع الإبحار والاستمتاع بالمجرى الملاحي";
     };
 
     const ship = {
@@ -641,7 +712,7 @@
         if (m.alpha > 0) {
           ctx.fillStyle = `rgba(161, 136, 127, ${m.alpha})`;
           ctx.beginPath();
-          ctx.arc(m.x, m.y - cameraY, m.size, 0, Math.PI * 2);
+          ctx.arc(m.x, m.y - cameraY, p.size || 3, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -686,7 +757,7 @@
           ctx.fillText(st.icon, drawX + dockWidth / 2, renderY + 4);
 
           ctx.fillStyle = '#0a2540';
-          ctx.font = 'bold 12px Tahoma';
+          ctx.font = 'bold 11px Tahoma';
           ctx.fillText(st.name, drawX + dockWidth / 2, renderY + 22);
 
           ctx.restore();
@@ -782,7 +853,7 @@
 
       removeFloatingJoystick();
       tossBtn.style.display = 'block';
-      hud.innerText = `🎯 ارمِ الهلب لتثبيت السفينة في حلقة رصيف (${station.name})!`;
+      hudText.innerText = `ارمِ الهلب لتثبيت السفينة في حلقة رصيف (${station.name})!`;
     }
 
     function drawAnchorMinigame() {
@@ -879,7 +950,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           الطلب: selected,
-          الحالة: "رسو ملاحة بقناة السويس",
+          الجهة: "قائمة مشروبات أجيلتي - بوفيه قناة السويس",
           الوقت: new Date().toLocaleTimeString('ar-EG')
         })
       });
@@ -895,7 +966,7 @@
         gameState = "AIMING";
         anchorGame.anchorDist = 0;
         tossBtn.style.display = 'block';
-        hud.innerText = `🎯 ركز وحاول مجدداً رمي الهلب في الحلقة!`;
+        hudText.innerText = `ركز وحاول مجدداً رمي الهلب في الحلقة!`;
       }, 1000);
     }
 
@@ -947,12 +1018,12 @@
         const inCut = isInCrossCut(ship.worldY) && (ship.worldX >= canalGeometry.westCanalEnd && ship.worldX <= canalGeometry.eastCanalStart);
 
         if (!inWestCanal && !inEastCanal && !inCut) {
-          if (!isStuckInMud) hud.innerText = "⚠️ شحوط في الرمال! اسحب إصبعك بالاتجاه المعاكس للخروج";
+          if (!isStuckInMud) hudText.innerText = "⚠️ شحوط في الرمال! اسحب إصبعك للخروج";
           isStuckInMud = true;
           if (ship.worldX < canalGeometry.westBank - 25) ship.worldX = canalGeometry.westBank - 25;
           if (ship.worldX > canalGeometry.eastBank + 25) ship.worldX = canalGeometry.eastBank + 25;
         } else {
-          if (isStuckInMud && targetDrink) hud.innerText = `🎯 وجهتك: رصيف (${targetDrink.name})`;
+          if (isStuckInMud && targetDrink) hudText.innerText = `وجهتك: رصيف (${targetDrink.name})`;
           isStuckInMud = false;
         }
 
@@ -996,13 +1067,14 @@
       if (e.key === 'ArrowDown' || e.key === 's') directMove.y = 1;
       if (e.key === 'ArrowLeft' || e.key === 'a') directMove.x = -1;
       if (e.key === 'ArrowRight' || e.key === 'd') directMove.x = 1;
-      if (e.key === 'h' || e.key === 'H') playShipHorn();
+      if (e.key === 'h' || e.key === 'H') startHorn();
       if (e.key === ' ' && gameState === "AIMING") tossBtn.click();
     });
 
     window.addEventListener('keyup', (e) => {
       if (['ArrowUp', 'ArrowDown', 'w', 's'].includes(e.key)) directMove.y = 0;
       if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) directMove.x = 0;
+      if (e.key === 'h' || e.key === 'H') stopHorn();
       if (directMove.x === 0 && directMove.y === 0) directMove.active = false;
     });
 
