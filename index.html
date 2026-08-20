@@ -29,17 +29,17 @@
     
     .agility-logo-box {
       background: #ffffff;
-      padding: 10px 22px;
+      padding: 12px 24px;
       border-radius: 16px;
-      margin-bottom: 15px;
+      margin-bottom: 16px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.35);
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .agility-logo-box svg {
-      width: 170px;
-      height: 48px;
+      width: 210px;
+      height: 60px;
       display: block;
     }
 
@@ -118,14 +118,14 @@
     }
     .hud-logo {
       background: #fff;
-      padding: 2px 6px;
+      padding: 3px 8px;
       border-radius: 6px;
       display: flex;
       align-items: center;
     }
     .hud-logo svg {
-      width: 65px;
-      height: 18px;
+      width: 80px;
+      height: 22px;
       display: block;
     }
 
@@ -266,15 +266,24 @@
 </head>
 <body>
 
-  <!-- شاشة البداية مع لوجو Agility SVG مدمج فائق الوضوح -->
+  <!-- شاشة البداية مع لوجو Agility المتجهي المطابق 100% -->
   <div id="menuScreen">
     <div class="agility-logo-box">
-      <svg viewBox="0 0 240 65" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M70 28 C85 10, 120 18, 140 26 C170 38, 200 24, 215 28 C185 45, 145 42, 125 35 C105 28, 90 32, 70 28 Z" fill="#F37023"/>
-        <path d="M48 26 C58 16, 75 14, 88 18 C78 26, 62 28, 48 26 Z" fill="#FFC20E"/>
-        <path d="M80 20 C105 20, 135 28, 150 32 C130 38, 100 32, 80 20 Z" fill="#FFFFFF" opacity="0.8"/>
-        <!-- كلمة Agility -->
-        <text x="5" y="48" font-family="'Segoe UI', Arial, sans-serif" font-weight="bold" font-style="italic" font-size="34" fill="#9E1B32">Agility</text>
+      <svg viewBox="0 0 440 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- رمز الصقر المجنح (Falcon Wing Icon) -->
+        <g transform="translate(130, 0)">
+          <!-- منقار ورأس الصقر الذهبي -->
+          <path d="M22 62 C15 58, 20 48, 40 38 C55 30, 68 28, 72 38 C60 48, 38 58, 22 62 Z" fill="#FDB813"/>
+          <path d="M50 28 C65 14, 82 12, 95 24 C80 32, 65 34, 50 28 Z" fill="#F37023"/>
+          <!-- الجناح الانسيابي الممتد البرتقالي -->
+          <path d="M60 42 C105 30, 160 52, 210 60 C250 66, 290 48, 310 52 C265 82, 205 78, 160 62 C125 50, 85 58, 60 42 Z" fill="#E8501D"/>
+          <!-- الطبقة السفلية المتدرجة -->
+          <path d="M80 50 C130 40, 190 62, 230 66 C180 78, 120 70, 80 50 Z" fill="#FF8D24"/>
+          <!-- القوس الأبيض الانسيابي لعين وجسم الصقر -->
+          <path d="M62 45 C78 36, 105 44, 125 52 C95 56, 75 52, 62 45 Z" fill="#FFFFFF"/>
+        </g>
+        <!-- كلمة Agility النصية الأصلية باللون العنابي -->
+        <text x="10" y="98" font-family="'Times New Roman', Times, Georgia, serif" font-weight="bold" font-style="italic" font-size="78" fill="#8B1D2C">Agility</text>
       </svg>
     </div>
     <h1>قائمة مشروبات أجيلتي</h1>
@@ -285,10 +294,15 @@
 
   <div class="hud" id="gameHud">
     <div class="hud-logo">
-      <svg viewBox="0 0 240 65" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M70 28 C85 10, 120 18, 140 26 C170 38, 200 24, 215 28 C185 45, 145 42, 125 35 C105 28, 90 32, 70 28 Z" fill="#F37023"/>
-        <path d="M48 26 C58 16, 75 14, 88 18 C78 26, 62 28, 48 26 Z" fill="#FFC20E"/>
-        <text x="5" y="48" font-family="'Segoe UI', Arial, sans-serif" font-weight="bold" font-style="italic" font-size="34" fill="#9E1B32">Agility</text>
+      <svg viewBox="0 0 440 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(130, 0)">
+          <path d="M22 62 C15 58, 20 48, 40 38 C55 30, 68 28, 72 38 C60 48, 38 58, 22 62 Z" fill="#FDB813"/>
+          <path d="M50 28 C65 14, 82 12, 95 24 C80 32, 65 34, 50 28 Z" fill="#F37023"/>
+          <path d="M60 42 C105 30, 160 52, 210 60 C250 66, 290 48, 310 52 C265 82, 205 78, 160 62 C125 50, 85 58, 60 42 Z" fill="#E8501D"/>
+          <path d="M80 50 C130 40, 190 62, 230 66 C180 78, 120 70, 80 50 Z" fill="#FF8D24"/>
+          <path d="M62 45 C78 36, 105 44, 125 52 C95 56, 75 52, 62 45 Z" fill="#FFFFFF"/>
+        </g>
+        <text x="10" y="98" font-family="'Times New Roman', Times, Georgia, serif" font-weight="bold" font-style="italic" font-size="78" fill="#8B1D2C">Agility</text>
       </svg>
     </div>
     <span id="hudText">اسحب في أي مكان بالشاشة لتوجيه السفينة</span>
