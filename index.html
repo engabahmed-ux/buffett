@@ -8,7 +8,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       overflow: hidden;
-      background-color: #d2b48c;
+      background-color: #e2c99a;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       user-select: none;
       touch-action: none;
@@ -23,85 +23,113 @@
       top: 15px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(13, 71, 161, 0.9);
+      background: rgba(10, 37, 64, 0.88);
+      backdrop-filter: blur(8px);
       color: #fff;
-      padding: 8px 20px;
-      border-radius: 20px;
+      padding: 10px 24px;
+      border-radius: 30px;
       font-size: 14px;
       font-weight: bold;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
       z-index: 5;
       text-align: center;
+      border: 1px solid rgba(255,255,255,0.2);
     }
     .controls {
       position: fixed;
       bottom: 25px;
       left: 50%;
       transform: translateX(-50%);
-      display: flex;
-      gap: 15px;
+      display: grid;
+      grid-template-columns: repeat(3, 60px);
+      grid-template-rows: repeat(2, 55px);
+      gap: 10px;
       z-index: 10;
+      justify-content: center;
     }
     .ctrl-btn {
-      width: 65px;
-      height: 65px;
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(5px);
       border: 2px solid #0d47a1;
-      border-radius: 50%;
-      font-size: 26px;
+      border-radius: 16px;
+      font-size: 22px;
       color: #0d47a1;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      touch-action: none;
     }
     .ctrl-btn:active {
       background: #0d47a1;
       color: white;
     }
+    #upBtn { grid-column: 2; grid-row: 1; }
+    #leftBtn { grid-column: 1; grid-row: 2; }
+    #downBtn { grid-column: 2; grid-row: 2; }
+    #rightBtn { grid-column: 3; grid-row: 2; }
+
     .toss-btn {
       display: none;
       position: fixed;
       bottom: 35px;
       left: 50%;
       transform: translateX(-50%);
-      padding: 16px 36px;
-      background: #d32f2f;
+      padding: 14px 34px;
+      background: linear-gradient(135deg, #d32f2f, #b71c1c);
       color: white;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
-      border: 3px solid #fff;
+      border: 2px solid #fff;
       border-radius: 30px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
       z-index: 15;
       cursor: pointer;
-      animation: pulse 1s infinite alternate;
     }
-    @keyframes pulse {
-      from { transform: translateX(-50%) scale(1); }
-      to { transform: translateX(-50%) scale(1.08); }
+    .status-toast {
+      display: none;
+      position: fixed;
+      top: 75px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(198, 40, 40, 0.95);
+      color: white;
+      padding: 10px 22px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      z-index: 20;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -10px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
     }
   </style>
 </head>
 <body>
 
-  <div class="hud" id="gameHud">⚓ قُد سفينتك وتوجه نحو رصيف المشروب المطلوب</div>
+  <div class="hud" id="gameHud">⚓ قُد سفينتك بحرية واقترب من أي رصيف مشروب للرسو</div>
+  <div class="status-toast" id="statusToast">❌ لم يصب الهلب! حاول مجدداً</div>
   <canvas id="gameCanvas"></canvas>
 
   <div class="controls" id="navControls">
-    <button class="ctrl-btn" id="leftBtn">◀</button>
     <button class="ctrl-btn" id="upBtn">▲</button>
+    <button class="ctrl-btn" id="leftBtn">◀</button>
+    <button class="ctrl-btn" id="downBtn">▼</button>
     <button class="ctrl-btn" id="rightBtn">▶</button>
   </div>
 
   <button class="toss-btn" id="tossBtn">⚓ ارمِ الهلب للتثبيت!</button>
 
   <script>
-    const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID"; // استبدل برابطك
+    const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID"; // استبدل برابطك الخاص
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const hud = document.getElementById('gameHud');
+    const toast = document.getElementById('statusToast');
     const navControls = document.getElementById('navControls');
     const tossBtn = document.getElementById('tossBtn');
 
@@ -114,68 +142,89 @@
     });
 
     const ship = {
-      x: width / 2,
-      y: height * 0.75,
-      width: 36,
-      height: 65,
-      speed: 3.8,
-      turnSpeed: 0.04,
+      worldX: width / 2,
+      worldY: 0,
+      width: 38,
+      height: 68,
+      speed: 0,
+      maxForwardSpeed: 3.6,
+      maxReverseSpeed: -2.2,
+      turnSpeed: 0.045,
       angle: -Math.PI / 2,
-      movingUp: false,
+      movingForward: false,
+      movingBackward: false,
       movingLeft: false,
       movingRight: false,
       wake: []
     };
 
     const stations = [
-      { id: 1, name: "شاي كشري أصيل", icon: "☕", side: "right", worldY: -250, completed: false },
-      { id: 2, name: "قهوة تركي مضبوط", icon: "☕", side: "left", worldY: -650, completed: false },
-      { id: 3, name: "إسبريسو إيطالي", icon: "🥃", side: "right", worldY: -1050, completed: false },
-      { id: 4, name: "عصير مانجو فريش", icon: "🍹", side: "left", worldY: -1450, completed: false },
-      { id: 5, name: "ليمون نعناع مثلج", icon: "🍋", side: "right", worldY: -1850, completed: false },
-      { id: 6, name: "مياه معدنية مثلجة", icon: "🧊", side: "left", worldY: -2250, completed: false }
+      { id: 1, name: "شاي كشري مزموق", icon: "☕", color: "#6d4c41", side: "right", worldY: -200, dockCooldown: 0 },
+      { id: 2, name: "قهوة تركي مظبوط", icon: "☕", color: "#4e342e", side: "left", worldY: -650, dockCooldown: 0 },
+      { id: 3, name: "إسبريسو دبل", icon: "🥃", color: "#3e2723", side: "right", worldY: -1100, dockCooldown: 0 },
+      { id: 4, name: "عصير مانجو فريش", icon: "🍹", color: "#ff8f00", side: "left", worldY: -1550, dockCooldown: 0 },
+      { id: 5, name: "ليمون نعناع مثلج", icon: "🍋", color: "#2e7d32", side: "right", worldY: -2000, dockCooldown: 0 },
+      { id: 6, name: "مياه معدنية مثلجة", icon: "🧊", color: "#0288d1", side: "left", worldY: -2450, dockCooldown: 0 }
     ];
 
-    let cameraY = 0;
-    let waterOffset = 0;
-    let gameState = "SAILING"; // "SAILING" | "AIMING" | "TOSSING"
+    let gameState = "SAILING"; // "SAILING" | "AIMING" | "TOSSING" | "DOCKED"
     let activeStation = null;
+    let waterOffset = 0;
+    let pulseAngle = 0;
 
-    // إعدادات لعبة تنشين الهلب
+    // إعدادات التنشين (هادئة وسلسة)
     const anchorGame = {
       angle: 0,
-      swingSpeed: 0.04,
-      swingLimit: 0.7,
+      swingSpeed: 0.022, // سرعة تأرجح هادئة
+      swingLimit: 0.55,
       anchorDist: 0,
-      tossSpeed: 7,
+      tossSpeed: 4.8,    // سرعة رمي مرئية وواضحة
       targetX: 0,
       targetY: 0,
-      targetRadius: 26
+      targetRadius: 28
     };
+
+    function showToast(msg) {
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2200);
+    }
 
     function drawCanal() {
       const canalLeft = width * 0.22;
       const canalWidth = width * 0.56;
       const canalRight = canalLeft + canalWidth;
 
-      ctx.fillStyle = '#e4c483';
+      // رمال الضفتين
+      const sandGrad = ctx.createLinearGradient(0, 0, width, 0);
+      sandGrad.addColorStop(0, '#e4c483');
+      sandGrad.addColorStop(0.2, '#d9b66c');
+      sandGrad.addColorStop(0.8, '#d9b66c');
+      sandGrad.addColorStop(1, '#e4c483');
+      ctx.fillStyle = sandGrad;
       ctx.fillRect(0, 0, width, height);
 
-      ctx.fillStyle = '#0277bd';
+      // مياه القناة المتدرجة
+      const waterGrad = ctx.createLinearGradient(canalLeft, 0, canalRight, 0);
+      waterGrad.addColorStop(0, '#026aa7');
+      waterGrad.addColorStop(0.5, '#0288d1');
+      waterGrad.addColorStop(1, '#026aa7');
+      ctx.fillStyle = waterGrad;
       ctx.fillRect(canalLeft, 0, canalWidth, height);
 
-      // أمواج المياه
-      waterOffset += 0.03;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+      // أمواج تفاعلية
+      waterOffset += 0.025;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
       ctx.lineWidth = 2;
       for (let y = 0; y < height; y += 45) {
         ctx.beginPath();
-        const wave = Math.sin(waterOffset + y * 0.05) * 8;
+        const wave = Math.sin(waterOffset + y * 0.04) * 8;
         ctx.moveTo(canalLeft, y);
         ctx.bezierCurveTo(canalLeft + canalWidth * 0.3 + wave, y - 5, canalLeft + canalWidth * 0.7 - wave, y + 5, canalRight, y);
         ctx.stroke();
       }
 
+      // خط المنتصف الملاحي
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
       ctx.setLineDash([20, 15]);
       ctx.beginPath();
@@ -189,11 +238,11 @@
       for (let i = 0; i < ship.wake.length; i++) {
         const p = ship.wake[i];
         p.alpha -= 0.015;
-        p.size += 0.5;
+        p.size += 0.4;
         if (p.alpha > 0) {
           ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
           ctx.beginPath();
-          ctx.arc(p.x, p.y - cameraY, p.size, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y - (ship.worldY - height * 0.7), p.size, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -201,51 +250,79 @@
     }
 
     function drawStations() {
-      const shipWorldY = ship.y + cameraY;
+      const cameraY = ship.worldY - height * 0.7;
+      pulseAngle += 0.04;
+      const pulseGlow = Math.sin(pulseAngle) * 5 + 8;
 
       stations.forEach(st => {
         const renderY = st.worldY - cameraY;
         const isLeft = st.side === 'left';
         const canalEdge = isLeft ? (width * 0.22) : (width * 0.78);
-        const dockX = isLeft ? canalEdge - 15 : canalEdge + 15;
-        const dockWidth = 92;
-        const dockHeight = 72;
-        const drawX = isLeft ? dockX - dockWidth : dockX;
+        const dockWidth = 100;
+        const dockHeight = 74;
+        const drawX = isLeft ? canalEdge - dockWidth - 8 : canalEdge + 8;
 
-        // رسم رصيف الميناء
-        ctx.save();
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = st.completed ? '#2e7d32' : '#0d47a1';
-        ctx.lineWidth = 3;
-        ctx.shadowColor = 'rgba(0,0,0,0.15)';
-        ctx.shadowBlur = 8;
-        ctx.beginPath();
-        ctx.roundRect(drawX, renderY - dockHeight / 2, dockWidth, dockHeight, 10);
-        ctx.fill();
-        ctx.stroke();
+        if (renderY > -100 && renderY < height + 100) {
+          ctx.save();
+          // ظل وتوهج
+          ctx.shadowColor = st.color;
+          ctx.shadowBlur = pulseGlow;
+          
+          // رصيف الميناء ثلاثي الأبعاد
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = st.color;
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.roundRect(drawX, renderY - dockHeight / 2, dockWidth, dockHeight, 14);
+          ctx.fill();
+          ctx.stroke();
 
-        ctx.font = '22px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(st.icon, drawX + dockWidth / 2, renderY - 8);
+          // شريط زخرفي علوي
+          ctx.fillStyle = st.color;
+          ctx.beginPath();
+          ctx.roundRect(drawX, renderY - dockHeight / 2, dockWidth, 8, [14, 14, 0, 0]);
+          ctx.fill();
 
-        ctx.fillStyle = '#0d47a1';
-        ctx.font = 'bold 11px Tahoma';
-        ctx.fillText(st.name, drawX + dockWidth / 2, renderY + 18);
-        ctx.restore();
+          // أيقونة المشروب
+          ctx.font = '24px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(st.icon, drawX + dockWidth / 2, renderY + 4);
 
-        // فحص الاقتراب لبدء التنشين
-        const dist = Math.hypot(ship.x - (isLeft ? canalEdge : canalEdge), shipWorldY - st.worldY);
-        if (dist < 85 && gameState === "SAILING" && !st.completed) {
-          startAnchorGame(st, isLeft ? canalEdge - 45 : canalEdge + 45, renderY);
+          // اسم المشروب
+          ctx.fillStyle = '#0a2540';
+          ctx.font = 'bold 11px Tahoma';
+          ctx.fillText(st.name, drawX + dockWidth / 2, renderY + 24);
+          ctx.restore();
+
+          // تحديث فترة الانتظار (Cooldown) لإعادة الطلب
+          if (st.dockCooldown > 0) st.dockCooldown--;
+
+          // بدء طور التنشين إذا اقتربت السفينة
+          const dockCenterX = isLeft ? canalEdge : canalEdge;
+          const dist = Math.hypot(ship.worldX - dockCenterX, ship.worldY - st.worldY);
+
+          if (dist < 88 && gameState === "SAILING" && st.dockCooldown === 0) {
+            startAnchorGame(st, isLeft ? canalEdge - 50 : canalEdge + 50, renderY);
+          }
         }
       });
     }
 
     function drawShip() {
+      const screenX = ship.worldX;
+      const screenY = height * 0.7;
+
       ctx.save();
-      ctx.translate(ship.x, ship.y);
+      ctx.translate(screenX, screenY);
       ctx.rotate(ship.angle + Math.PI / 2);
 
+      // ظل المركب في الماء
+      ctx.shadowColor = 'rgba(0,0,0,0.3)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetX = 3;
+      ctx.shadowOffsetY = 4;
+
+      // بدن المركب
       ctx.fillStyle = '#d32f2f';
       ctx.beginPath();
       ctx.moveTo(0, -ship.height / 2);
@@ -253,11 +330,23 @@
       ctx.bezierCurveTo(-ship.width / 2, ship.height / 2, -ship.width / 2, -ship.height / 4, 0, -ship.height / 2);
       ctx.fill();
       ctx.strokeStyle = '#801313';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
 
+      // مقصورة القيادة
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-ship.width / 4, -ship.height / 6, ship.width / 2, ship.height / 2.5);
+      ctx.beginPath();
+      ctx.roundRect(-ship.width / 3.5, -ship.height / 5, ship.width / 1.75, ship.height / 2.3, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#0d47a1';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // مدخنة
+      ctx.fillStyle = '#212121';
+      ctx.beginPath();
+      ctx.arc(0, ship.height / 8, 4.5, 0, Math.PI * 2);
+      ctx.fill();
 
       ctx.restore();
     }
@@ -272,32 +361,32 @@
 
       navControls.style.display = 'none';
       tossBtn.style.display = 'block';
-      hud.innerText = `🎯 اضغط "ارمِ الهلب" عندما يشير السهم نحو حلقة الرصيف!`;
+      hud.innerText = `🎯 اضغط "ارمِ الهلب" عندما يصوب السهم نحو حلقة (${station.name})!`;
     }
 
     function drawAnchorMinigame() {
       const isLeft = activeStation.side === 'left';
-      const startX = ship.x;
-      const startY = ship.y;
+      const startX = ship.worldX;
+      const startY = height * 0.7;
 
-      // 1. رسم حلقة التثبيت (Bollard Target)
+      // 1. حلقة التثبيت بالرصيف
       ctx.save();
       ctx.lineWidth = 4;
       ctx.strokeStyle = '#f57c00';
-      ctx.fillStyle = 'rgba(255, 179, 0, 0.4)';
+      ctx.fillStyle = 'rgba(255, 179, 0, 0.35)';
       ctx.beginPath();
       ctx.arc(anchorGame.targetX, anchorGame.targetY, anchorGame.targetRadius, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
-      // أسطوانة الربط
+      // مسمار الربط
       ctx.fillStyle = '#37474f';
       ctx.beginPath();
-      ctx.arc(anchorGame.targetX, anchorGame.targetY, 10, 0, Math.PI * 2);
+      ctx.arc(anchorGame.targetX, anchorGame.targetY, 9, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
-      // 2. حساب وتأرجح زاوية التنشين
+      // 2. تأرجح زاوية التنشين
       if (gameState === "AIMING") {
         anchorGame.angle += anchorGame.swingSpeed;
         if (Math.abs(anchorGame.angle) > anchorGame.swingLimit) {
@@ -308,31 +397,30 @@
       const baseAngle = isLeft ? Math.PI : 0;
       const currentAngle = baseAngle + anchorGame.angle;
 
-      // 3. رسم خط التنشين الاسترشادي
+      // 3. خط التصويب
       if (gameState === "AIMING") {
-        ctx.strokeStyle = 'rgba(255, 235, 59, 0.7)';
-        ctx.setLineDash([6, 6]);
+        ctx.strokeStyle = 'rgba(255, 235, 59, 0.75)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
         ctx.beginPath();
         ctx.moveTo(startX, startY);
-        ctx.lineTo(startX + Math.cos(currentAngle) * 160, startY + Math.sin(currentAngle) * 160);
+        ctx.lineTo(startX + Math.cos(currentAngle) * 150, startY + Math.sin(currentAngle) * 150);
         ctx.stroke();
         ctx.setLineDash([]);
       }
 
-      // 4. رسم حبل ومخطاف الهلب أثناء الطيران أو الثبات
-      const currentDist = gameState === "TOSSING" ? anchorGame.anchorDist : 25;
+      // 4. رسم الهلب والحبل
+      const currentDist = gameState === "TOSSING" ? anchorGame.anchorDist : 20;
       const anchorX = startX + Math.cos(currentAngle) * currentDist;
       const anchorY = startY + Math.sin(currentAngle) * currentDist;
 
-      // الحبل
-      ctx.strokeStyle = '#5d4037';
+      ctx.strokeStyle = '#4e342e';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(startX, startY);
       ctx.lineTo(anchorX, anchorY);
       ctx.stroke();
 
-      // الهلب
       ctx.save();
       ctx.translate(anchorX, anchorY);
       ctx.rotate(currentAngle);
@@ -342,17 +430,17 @@
       ctx.fillText('⚓', 0, 0);
       ctx.restore();
 
-      // 5. منطق انطلاق الهلب وفحص الإصابة
+      // 5. التحقق من الإصابة
       if (gameState === "TOSSING") {
         anchorGame.anchorDist += anchorGame.tossSpeed;
         const maxDist = Math.hypot(anchorGame.targetX - startX, anchorGame.targetY - startY);
 
         if (anchorGame.anchorDist >= maxDist) {
           const hitDist = Math.hypot(anchorX - anchorGame.targetX, anchorY - anchorGame.targetY);
-          if (hitDist <= anchorGame.targetRadius + 12) {
-            handleSuccessfulDock();
+          if (hitDist <= anchorGame.targetRadius + 10) {
+            handleSuccess();
           } else {
-            handleFailedDock();
+            handleFailure();
           }
         }
       }
@@ -365,10 +453,10 @@
       }
     };
 
-    function handleSuccessfulDock() {
+    function handleSuccess() {
       gameState = "DOCKED";
       const selected = activeStation.name;
-      hud.innerText = `🎉 تم الرسو بنجاح! جاري إرسال طلب (${selected})...`;
+      hud.innerText = `🎉 تم التثبيت بنجاح! جاري إرسال طلب (${selected})...`;
 
       fetch(FORMSPREE_ENDPOINT, {
         method: "POST",
@@ -380,59 +468,70 @@
         })
       }).then(() => {
         setTimeout(() => {
-          alert(`تم تثبيت السفينة وإرسال طلب (${selected}) للصالون بنجاح! ☕⚓`);
-          activeStation.completed = true;
+          alert(`تم تثبيت المركب وإرسال طلب (${selected}) للصالون بنجاح! ☕⚓`);
+          activeStation.dockCooldown = 250; // تبريد بسيط لمنع التكرار الفوري
           resumeSailing();
         }, 300);
       }).catch(() => {
-        alert(`تم التثبيت بنجاح لـ (${selected})!`);
-        activeStation.completed = true;
+        alert(`تم تثبيت السفينة لـ (${selected})!`);
+        activeStation.dockCooldown = 250;
         resumeSailing();
       });
     }
 
-    function handleFailedDock() {
+    function handleFailure() {
       gameState = "DOCKED";
-      hud.innerText = "❌ لم يصب الهلب حلقة الرصيف! أعد المحاولة...";
+      showToast("❌ لم يصب الهلب حلقة الرسو! حاول مجدداً");
       setTimeout(() => {
         gameState = "AIMING";
         anchorGame.anchorDist = 0;
         tossBtn.style.display = 'block';
-        hud.innerText = `🎯 ركز وقم برمي الهلب في اتجاه الحلقة!`;
-      }, 900);
+        hud.innerText = `🎯 ركز وحاول مجدداً رمي الهلب في الحلقة!`;
+      }, 1000);
     }
 
     function resumeSailing() {
       gameState = "SAILING";
       activeStation = null;
       tossBtn.style.display = 'none';
-      navControls.style.display = 'flex';
-      hud.innerText = "⚓ تابع الإبحار لاختيار مشروبات أخرى";
+      navControls.style.display = 'grid';
+      hud.innerText = "⚓ تابع الإبحار بحرية، يمكنك الالتفاف والعودة لأي مشروب";
     }
 
     function update() {
-      const canalLeftLimit = width * 0.24;
-      const canalRightLimit = width * 0.76;
+      const canalLeftLimit = width * 0.25;
+      const canalRightLimit = width * 0.75;
 
       if (gameState === "SAILING") {
-        if (ship.movingUp) {
-          cameraY -= ship.speed;
-          ship.wake.push({
-            x: ship.x + (Math.random() * 6 - 3),
-            y: ship.y + cameraY + ship.height / 2,
-            size: 4,
-            alpha: 0.6
-          });
+        // حركة للأمام / للخلف
+        if (ship.movingForward) {
+          ship.speed = Math.min(ship.speed + 0.2, ship.maxForwardSpeed);
+        } else if (ship.movingBackward) {
+          ship.speed = Math.max(ship.speed - 0.2, ship.maxReverseSpeed);
+        } else {
+          ship.speed *= 0.94; // احتكاك الماء التلقائي
         }
 
-        if (ship.movingLeft) {
-          if (ship.x > canalLeftLimit) ship.x -= ship.speed * 0.8;
-          ship.angle = Math.max(ship.angle - ship.turnSpeed, -Math.PI / 2 - 0.4);
-        } else if (ship.movingRight) {
-          if (ship.x < canalRightLimit) ship.x += ship.speed * 0.8;
-          ship.angle = Math.min(ship.angle + ship.turnSpeed, -Math.PI / 2 + 0.4);
-        } else {
-          ship.angle += (-Math.PI / 2 - ship.angle) * 0.1;
+        // الدوران والالتفاف الكامل (360 درجة)
+        if (ship.movingLeft) ship.angle -= ship.turnSpeed;
+        if (ship.movingRight) ship.angle += ship.turnSpeed;
+
+        // تطبيق السرعة في اتجاه زاوية السفينة
+        ship.worldX += Math.cos(ship.angle) * ship.speed;
+        ship.worldY += Math.sin(ship.angle) * ship.speed;
+
+        // حواف القناة المائية
+        if (ship.worldX < canalLeftLimit) ship.worldX = canalLeftLimit;
+        if (ship.worldX > canalRightLimit) ship.worldX = canalRightLimit;
+
+        // رغوة محرك السفينة
+        if (Math.abs(ship.speed) > 0.8) {
+          ship.wake.push({
+            x: ship.worldX - Math.cos(ship.angle) * (ship.height / 2),
+            y: ship.worldY - Math.sin(ship.angle) * (ship.height / 2),
+            size: 3.5,
+            alpha: 0.55
+          });
         }
       }
 
@@ -449,7 +548,7 @@
       requestAnimationFrame(update);
     }
 
-    // إعدادات التحكم
+    // ربط أزرار التحكم
     const bindBtn = (id, prop) => {
       const el = document.getElementById(id);
       el.addEventListener('pointerdown', (e) => { e.preventDefault(); ship[prop] = true; });
@@ -457,21 +556,24 @@
       el.addEventListener('pointerleave', () => ship[prop] = false);
     };
 
-    bindBtn('upBtn', 'movingUp');
+    bindBtn('upBtn', 'movingForward');
+    bindBtn('downBtn', 'movingBackward');
     bindBtn('leftBtn', 'movingLeft');
     bindBtn('rightBtn', 'movingRight');
 
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp') ship.movingUp = true;
-      if (e.key === 'ArrowLeft') ship.movingLeft = true;
-      if (e.key === 'ArrowRight') ship.movingRight = true;
+      if (e.key === 'ArrowUp' || e.key === 'w') ship.movingForward = true;
+      if (e.key === 'ArrowDown' || e.key === 's') ship.movingBackward = true;
+      if (e.key === 'ArrowLeft' || e.key === 'a') ship.movingLeft = true;
+      if (e.key === 'ArrowRight' || e.key === 'd') ship.movingRight = true;
       if (e.key === ' ' && gameState === "AIMING") tossBtn.click();
     });
 
     window.addEventListener('keyup', (e) => {
-      if (e.key === 'ArrowUp') ship.movingUp = false;
-      if (e.key === 'ArrowLeft') ship.movingLeft = false;
-      if (e.key === 'ArrowRight') ship.movingRight = false;
+      if (e.key === 'ArrowUp' || e.key === 'w') ship.movingForward = false;
+      if (e.key === 'ArrowDown' || e.key === 's') ship.movingBackward = false;
+      if (e.key === 'ArrowLeft' || e.key === 'a') ship.movingLeft = false;
+      if (e.key === 'ArrowRight' || e.key === 'd') ship.movingRight = false;
     });
 
     update();
