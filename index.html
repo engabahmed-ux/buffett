@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>بوفيه قناة السويس الملاحي</title>
+  <title>ملاحة بوفيه قناة السويس</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -23,59 +23,16 @@
       top: 15px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(13, 71, 161, 0.85);
-      color: white;
+      background: rgba(13, 71, 161, 0.9);
+      color: #fff;
       padding: 8px 20px;
       border-radius: 20px;
       font-size: 14px;
       font-weight: bold;
-      letter-spacing: 0.5px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       z-index: 5;
       text-align: center;
     }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(0.9);
-      background: #ffffff;
-      padding: 24px 28px;
-      border-radius: 16px;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-      text-align: center;
-      z-index: 20;
-      width: 85%;
-      max-width: 340px;
-      transition: transform 0.2s ease;
-      border: 3px solid #0288d1;
-    }
-    .modal.active {
-      display: block;
-      transform: translate(-50%, -50%) scale(1);
-    }
-    .modal-icon {
-      font-size: 45px;
-      margin-bottom: 8px;
-    }
-    .modal h3 { color: #0d47a1; margin-bottom: 8px; font-size: 19px; }
-    .modal p { color: #555; font-size: 14px; margin-bottom: 18px; }
-    .btn-group { display: flex; gap: 10px; justify-content: center; }
-    .btn {
-      flex: 1;
-      padding: 12px 10px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      transition: opacity 0.2s;
-    }
-    .btn:active { opacity: 0.8; }
-    .btn-confirm { background-color: #2e7d32; color: white; }
-    .btn-cancel { background-color: #c62828; color: white; }
-    
     .controls {
       position: fixed;
       bottom: 25px;
@@ -88,7 +45,7 @@
     .ctrl-btn {
       width: 65px;
       height: 65px;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.92);
       border: 2px solid #0d47a1;
       border-radius: 50%;
       font-size: 26px;
@@ -97,44 +54,56 @@
       align-items: center;
       justify-content: center;
       box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-      touch-action: none;
     }
     .ctrl-btn:active {
       background: #0d47a1;
       color: white;
     }
+    .toss-btn {
+      display: none;
+      position: fixed;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 16px 36px;
+      background: #d32f2f;
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+      border: 3px solid #fff;
+      border-radius: 30px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      z-index: 15;
+      cursor: pointer;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse {
+      from { transform: translateX(-50%) scale(1); }
+      to { transform: translateX(-50%) scale(1.08); }
+    }
   </style>
 </head>
 <body>
 
-  <div class="hud">⚓ قم بقيادة السفينة واقترب من ضفاف القناة لاكتشاف المشروبات</div>
+  <div class="hud" id="gameHud">⚓ قُد سفينتك وتوجه نحو رصيف المشروب المطلوب</div>
   <canvas id="gameCanvas"></canvas>
 
-  <div class="controls">
+  <div class="controls" id="navControls">
     <button class="ctrl-btn" id="leftBtn">◀</button>
     <button class="ctrl-btn" id="upBtn">▲</button>
     <button class="ctrl-btn" id="rightBtn">▶</button>
   </div>
 
-  <div class="modal" id="orderModal">
-    <div class="modal-icon" id="modalIcon">☕</div>
-    <h3 id="modalTitle">محطة ضيافة</h3>
-    <p id="modalDesc"></p>
-    <div class="btn-group">
-      <button class="btn btn-confirm" id="confirmBtn">تأكيد ورسو</button>
-      <button class="btn btn-cancel" id="cancelBtn">متابعة الإبحار</button>
-    </div>
-  </div>
+  <button class="toss-btn" id="tossBtn">⚓ ارمِ الهلب للتثبيت!</button>
 
   <script>
-    const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID"; // استبدل برابط Formspree الخاص بك
+    const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID"; // استبدل برابطك
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const modal = document.getElementById('orderModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalDesc = document.getElementById('modalDesc');
-    const modalIcon = document.getElementById('modalIcon');
+    const hud = document.getElementById('gameHud');
+    const navControls = document.getElementById('navControls');
+    const tossBtn = document.getElementById('tossBtn');
 
     let width = canvas.width = window.innerWidth;
     let height = canvas.height = window.innerHeight;
@@ -151,58 +120,62 @@
       height: 65,
       speed: 3.8,
       turnSpeed: 0.04,
-      angle: -Math.PI / 2, // موجه لأعلى
+      angle: -Math.PI / 2,
       movingUp: false,
       movingLeft: false,
       movingRight: false,
       wake: []
     };
 
-    // قائمة المشروبات والمحطات على طول القناة
     const stations = [
-      { id: 1, name: "شاي كشري أصيل", icon: "☕", side: "right", worldY: -350, triggered: false },
-      { id: 2, name: "قهوة تركي مضبوط", icon: "☕", side: "left", worldY: -750, triggered: false },
-      { id: 3, name: "إسبريسو إيطالي دبل", icon: "🥃", side: "right", worldY: -1150, triggered: false },
-      { id: 4, name: "عصير مانجو فريش", icon: "🍹", side: "left", worldY: -1550, triggered: false },
-      { id: 5, name: "ليمون نعناع مثلج", icon: "🍋", side: "right", worldY: -1950, triggered: false },
-      { id: 6, name: "مياه معدنية مثلجة", icon: "🧊", side: "left", worldY: -2350, triggered: false }
+      { id: 1, name: "شاي كشري أصيل", icon: "☕", side: "right", worldY: -250, completed: false },
+      { id: 2, name: "قهوة تركي مضبوط", icon: "☕", side: "left", worldY: -650, completed: false },
+      { id: 3, name: "إسبريسو إيطالي", icon: "🥃", side: "right", worldY: -1050, completed: false },
+      { id: 4, name: "عصير مانجو فريش", icon: "🍹", side: "left", worldY: -1450, completed: false },
+      { id: 5, name: "ليمون نعناع مثلج", icon: "🍋", side: "right", worldY: -1850, completed: false },
+      { id: 6, name: "مياه معدنية مثلجة", icon: "🧊", side: "left", worldY: -2250, completed: false }
     ];
 
-    let activeStation = null;
     let cameraY = 0;
-    let waterWaveOffset = 0;
-    const DISCOVERY_RADIUS = 280; // المسافة التي يبدأ عندها المشروب بالظهور تدريجياً
+    let waterOffset = 0;
+    let gameState = "SAILING"; // "SAILING" | "AIMING" | "TOSSING"
+    let activeStation = null;
+
+    // إعدادات لعبة تنشين الهلب
+    const anchorGame = {
+      angle: 0,
+      swingSpeed: 0.04,
+      swingLimit: 0.7,
+      anchorDist: 0,
+      tossSpeed: 7,
+      targetX: 0,
+      targetY: 0,
+      targetRadius: 26
+    };
 
     function drawCanal() {
       const canalLeft = width * 0.22;
       const canalWidth = width * 0.56;
       const canalRight = canalLeft + canalWidth;
 
-      // رمال الضفة الشرقية والغربية
       ctx.fillStyle = '#e4c483';
       ctx.fillRect(0, 0, width, height);
 
-      // مياه المجرى الملاحي
       ctx.fillStyle = '#0277bd';
       ctx.fillRect(canalLeft, 0, canalWidth, height);
 
-      // رسم أمواج خفيفة متحركة
-      waterWaveOffset += 0.03;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      // أمواج المياه
+      waterOffset += 0.03;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
       ctx.lineWidth = 2;
       for (let y = 0; y < height; y += 45) {
         ctx.beginPath();
-        const waveShift = Math.sin(waterWaveOffset + y * 0.05) * 8;
+        const wave = Math.sin(waterOffset + y * 0.05) * 8;
         ctx.moveTo(canalLeft, y);
-        ctx.bezierCurveTo(
-          canalLeft + canalWidth * 0.3 + waveShift, y - 5,
-          canalLeft + canalWidth * 0.7 - waveShift, y + 5,
-          canalRight, y
-        );
+        ctx.bezierCurveTo(canalLeft + canalWidth * 0.3 + wave, y - 5, canalLeft + canalWidth * 0.7 - wave, y + 5, canalRight, y);
         ctx.stroke();
       }
 
-      // خط التوجيه الملاحي الأوسط
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
       ctx.setLineDash([20, 15]);
       ctx.beginPath();
@@ -213,12 +186,10 @@
     }
 
     function drawShipWake() {
-      // رسم أثر أمواج السفينة
-      ctx.save();
       for (let i = 0; i < ship.wake.length; i++) {
         const p = ship.wake[i];
         p.alpha -= 0.015;
-        p.size += 0.6;
+        p.size += 0.5;
         if (p.alpha > 0) {
           ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
           ctx.beginPath();
@@ -227,7 +198,6 @@
         }
       }
       ship.wake = ship.wake.filter(p => p.alpha > 0);
-      ctx.restore();
     }
 
     function drawStations() {
@@ -238,54 +208,35 @@
         const isLeft = st.side === 'left';
         const canalEdge = isLeft ? (width * 0.22) : (width * 0.78);
         const dockX = isLeft ? canalEdge - 15 : canalEdge + 15;
-        const dockWidth = 90;
-        const dockHeight = 70;
+        const dockWidth = 92;
+        const dockHeight = 72;
         const drawX = isLeft ? dockX - dockWidth : dockX;
 
-        // حساب المسافة الحقيقية بين السفينة والمحطة
-        const dist = Math.hypot(ship.x - dockX, shipWorldY - st.worldY);
+        // رسم رصيف الميناء
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = st.completed ? '#2e7d32' : '#0d47a1';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(0,0,0,0.15)';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.roundRect(drawX, renderY - dockHeight / 2, dockWidth, dockHeight, 10);
+        ctx.fill();
+        ctx.stroke();
 
-        // إذا كانت السفينة قريبة، يتم حساب نسبة الظهور (Fade-in / Scale-in)
-        if (dist < DISCOVERY_RADIUS) {
-          const visibility = Math.min(1, Math.max(0, 1 - (dist - 50) / (DISCOVERY_RADIUS - 50)));
-          const scale = 0.6 + (visibility * 0.4);
+        ctx.font = '22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(st.icon, drawX + dockWidth / 2, renderY - 8);
 
-          ctx.save();
-          ctx.globalAlpha = visibility;
-          ctx.translate(drawX + dockWidth / 2, renderY);
-          ctx.scale(scale, scale);
+        ctx.fillStyle = '#0d47a1';
+        ctx.font = 'bold 11px Tahoma';
+        ctx.fillText(st.name, drawX + dockWidth / 2, renderY + 18);
+        ctx.restore();
 
-          // تأثير توهج حول الرصيف عند الاقتراب الشديد
-          if (dist < 130) {
-            ctx.shadowColor = '#ffb300';
-            ctx.shadowBlur = 15;
-          }
-
-          // خلفية الرصيف / المحطة
-          ctx.fillStyle = '#ffffff';
-          ctx.strokeStyle = '#0d47a1';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.roundRect(-dockWidth / 2, -dockHeight / 2, dockWidth, dockHeight, 10);
-          ctx.fill();
-          ctx.stroke();
-
-          // أيقونة المشروب
-          ctx.font = '24px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(st.icon, 0, -6);
-
-          // اسم المشروب
-          ctx.fillStyle = '#0d47a1';
-          ctx.font = 'bold 11px Tahoma';
-          ctx.fillText(st.name, 0, 20);
-
-          ctx.restore();
-
-          // نافذة التأكيد عند الرسو بالقرب من الحافة
-          if (dist < 85 && !st.triggered && !activeStation) {
-            triggerDocking(st);
-          }
+        // فحص الاقتراب لبدء التنشين
+        const dist = Math.hypot(ship.x - (isLeft ? canalEdge : canalEdge), shipWorldY - st.worldY);
+        if (dist < 85 && gameState === "SAILING" && !st.completed) {
+          startAnchorGame(st, isLeft ? canalEdge - 45 : canalEdge + 45, renderY);
         }
       });
     }
@@ -295,7 +246,6 @@
       ctx.translate(ship.x, ship.y);
       ctx.rotate(ship.angle + Math.PI / 2);
 
-      // بدن السفينة
       ctx.fillStyle = '#d32f2f';
       ctx.beginPath();
       ctx.moveTo(0, -ship.height / 2);
@@ -306,68 +256,167 @@
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // مقدمة بيضاء ومقصورة القيادة
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(-ship.width / 4, -ship.height / 6, ship.width / 2, ship.height / 2.5);
-      
-      // المدخنة البحرية
-      ctx.fillStyle = '#212121';
-      ctx.beginPath();
-      ctx.arc(0, ship.height / 8, 4, 0, Math.PI * 2);
-      ctx.fill();
 
       ctx.restore();
     }
 
-    function triggerDocking(station) {
+    function startAnchorGame(station, targetX, targetY) {
+      gameState = "AIMING";
       activeStation = station;
-      modalIcon.innerText = station.icon;
-      modalTitle.innerText = station.name;
-      modalDesc.innerText = `اقتربت سفينتك من رصيف (${station.name}). هل ترغب في طلب هذا المشروب للصالون؟`;
-      modal.classList.add('active');
+      anchorGame.targetX = targetX;
+      anchorGame.targetY = targetY;
+      anchorGame.anchorDist = 0;
+      anchorGame.angle = 0;
+
+      navControls.style.display = 'none';
+      tossBtn.style.display = 'block';
+      hud.innerText = `🎯 اضغط "ارمِ الهلب" عندما يشير السهم نحو حلقة الرصيف!`;
     }
 
-    document.getElementById('cancelBtn').onclick = () => {
-      modal.classList.remove('active');
-      if (activeStation) {
-        activeStation.triggered = true;
-        activeStation = null;
+    function drawAnchorMinigame() {
+      const isLeft = activeStation.side === 'left';
+      const startX = ship.x;
+      const startY = ship.y;
+
+      // 1. رسم حلقة التثبيت (Bollard Target)
+      ctx.save();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#f57c00';
+      ctx.fillStyle = 'rgba(255, 179, 0, 0.4)';
+      ctx.beginPath();
+      ctx.arc(anchorGame.targetX, anchorGame.targetY, anchorGame.targetRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // أسطوانة الربط
+      ctx.fillStyle = '#37474f';
+      ctx.beginPath();
+      ctx.arc(anchorGame.targetX, anchorGame.targetY, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // 2. حساب وتأرجح زاوية التنشين
+      if (gameState === "AIMING") {
+        anchorGame.angle += anchorGame.swingSpeed;
+        if (Math.abs(anchorGame.angle) > anchorGame.swingLimit) {
+          anchorGame.swingSpeed *= -1;
+        }
+      }
+
+      const baseAngle = isLeft ? Math.PI : 0;
+      const currentAngle = baseAngle + anchorGame.angle;
+
+      // 3. رسم خط التنشين الاسترشادي
+      if (gameState === "AIMING") {
+        ctx.strokeStyle = 'rgba(255, 235, 59, 0.7)';
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(startX + Math.cos(currentAngle) * 160, startY + Math.sin(currentAngle) * 160);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // 4. رسم حبل ومخطاف الهلب أثناء الطيران أو الثبات
+      const currentDist = gameState === "TOSSING" ? anchorGame.anchorDist : 25;
+      const anchorX = startX + Math.cos(currentAngle) * currentDist;
+      const anchorY = startY + Math.sin(currentAngle) * currentDist;
+
+      // الحبل
+      ctx.strokeStyle = '#5d4037';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(anchorX, anchorY);
+      ctx.stroke();
+
+      // الهلب
+      ctx.save();
+      ctx.translate(anchorX, anchorY);
+      ctx.rotate(currentAngle);
+      ctx.font = '26px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⚓', 0, 0);
+      ctx.restore();
+
+      // 5. منطق انطلاق الهلب وفحص الإصابة
+      if (gameState === "TOSSING") {
+        anchorGame.anchorDist += anchorGame.tossSpeed;
+        const maxDist = Math.hypot(anchorGame.targetX - startX, anchorGame.targetY - startY);
+
+        if (anchorGame.anchorDist >= maxDist) {
+          const hitDist = Math.hypot(anchorX - anchorGame.targetX, anchorY - anchorGame.targetY);
+          if (hitDist <= anchorGame.targetRadius + 12) {
+            handleSuccessfulDock();
+          } else {
+            handleFailedDock();
+          }
+        }
+      }
+    }
+
+    tossBtn.onclick = () => {
+      if (gameState === "AIMING") {
+        gameState = "TOSSING";
+        tossBtn.style.display = 'none';
       }
     };
 
-    document.getElementById('confirmBtn').onclick = () => {
+    function handleSuccessfulDock() {
+      gameState = "DOCKED";
       const selected = activeStation.name;
-      modalDesc.innerText = "جاري إرسال الإشارة لطاقم الضيافة...";
-      
+      hud.innerText = `🎉 تم الرسو بنجاح! جاري إرسال طلب (${selected})...`;
+
       fetch(FORMSPREE_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          المشروب_المطلوب: selected,
-          التوقيت: new Date().toLocaleTimeString('ar-EG'),
-          الموقع: "رصيف الضيافة الملاحي"
+          الطلب: selected,
+          الرسو: "تثبيت ناجح بالهلب",
+          الوقت: new Date().toLocaleTimeString('ar-EG')
         })
       }).then(() => {
-        alert(`تم طلب (${selected}) بنجاح! سيصلك لمكانك حالاً ⚓`);
-        modal.classList.remove('active');
-        activeStation.triggered = true;
-        activeStation = null;
+        setTimeout(() => {
+          alert(`تم تثبيت السفينة وإرسال طلب (${selected}) للصالون بنجاح! ☕⚓`);
+          activeStation.completed = true;
+          resumeSailing();
+        }, 300);
       }).catch(() => {
-        alert("تعذر الإرسال، يرجى المحاولة مرة أخرى.");
-        modal.classList.remove('active');
-        activeStation = null;
+        alert(`تم التثبيت بنجاح لـ (${selected})!`);
+        activeStation.completed = true;
+        resumeSailing();
       });
-    };
+    }
+
+    function handleFailedDock() {
+      gameState = "DOCKED";
+      hud.innerText = "❌ لم يصب الهلب حلقة الرصيف! أعد المحاولة...";
+      setTimeout(() => {
+        gameState = "AIMING";
+        anchorGame.anchorDist = 0;
+        tossBtn.style.display = 'block';
+        hud.innerText = `🎯 ركز وقم برمي الهلب في اتجاه الحلقة!`;
+      }, 900);
+    }
+
+    function resumeSailing() {
+      gameState = "SAILING";
+      activeStation = null;
+      tossBtn.style.display = 'none';
+      navControls.style.display = 'flex';
+      hud.innerText = "⚓ تابع الإبحار لاختيار مشروبات أخرى";
+    }
 
     function update() {
       const canalLeftLimit = width * 0.24;
       const canalRightLimit = width * 0.76;
 
-      if (!activeStation) {
-        // حركة للأمام
+      if (gameState === "SAILING") {
         if (ship.movingUp) {
           cameraY -= ship.speed;
-          // توليد أثر الماء خلف المحرك
           ship.wake.push({
             x: ship.x + (Math.random() * 6 - 3),
             y: ship.y + cameraY + ship.height / 2,
@@ -376,7 +425,6 @@
           });
         }
 
-        // الانعطاف والدوران الديناميكي
         if (ship.movingLeft) {
           if (ship.x > canalLeftLimit) ship.x -= ship.speed * 0.8;
           ship.angle = Math.max(ship.angle - ship.turnSpeed, -Math.PI / 2 - 0.4);
@@ -384,7 +432,6 @@
           if (ship.x < canalRightLimit) ship.x += ship.speed * 0.8;
           ship.angle = Math.min(ship.angle + ship.turnSpeed, -Math.PI / 2 + 0.4);
         } else {
-          // العودة للوضع الرأسي بسلاسة
           ship.angle += (-Math.PI / 2 - ship.angle) * 0.1;
         }
       }
@@ -395,10 +442,14 @@
       drawStations();
       drawShip();
 
+      if (gameState !== "SAILING" && activeStation) {
+        drawAnchorMinigame();
+      }
+
       requestAnimationFrame(update);
     }
 
-    // إعدادات أزرار التحكم باللمس والكيبورد
+    // إعدادات التحكم
     const bindBtn = (id, prop) => {
       const el = document.getElementById(id);
       el.addEventListener('pointerdown', (e) => { e.preventDefault(); ship[prop] = true; });
@@ -414,6 +465,7 @@
       if (e.key === 'ArrowUp') ship.movingUp = true;
       if (e.key === 'ArrowLeft') ship.movingLeft = true;
       if (e.key === 'ArrowRight') ship.movingRight = true;
+      if (e.key === ' ' && gameState === "AIMING") tossBtn.click();
     });
 
     window.addEventListener('keyup', (e) => {
