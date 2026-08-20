@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>بوفيه قناة السويس الملاحي</title>
+  <title>ملاحة بوفيه قناة السويس</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -26,7 +26,7 @@
       z-index: 100;
       padding: 20px;
     }
-    #menuScreen h1 { font-size: 24px; margin-bottom: 6px; color: #ffb703; text-align: center; }
+    #menuScreen h1 { font-size: 23px; margin-bottom: 6px; color: #ffb703; text-align: center; }
     #menuScreen p { font-size: 13px; color: #b0bec5; margin-bottom: 20px; text-align: center; }
     
     .drink-grid {
@@ -48,7 +48,7 @@
     }
     .drink-card.selected {
       border-color: #ffb703;
-      background: rgba(255, 183, 3, 0.2);
+      background: rgba(255, 183, 3, 0.25);
       transform: scale(1.04);
       box-shadow: 0 0 15px rgba(255, 183, 3, 0.4);
     }
@@ -84,7 +84,7 @@
       top: 15px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(10, 37, 64, 0.88);
+      background: rgba(10, 37, 64, 0.9);
       backdrop-filter: blur(8px);
       color: #fff;
       padding: 8px 20px;
@@ -102,8 +102,8 @@
       position: fixed;
       bottom: 20px;
       right: 15px;
-      width: 80px;
-      height: 140px;
+      width: 85px;
+      height: 150px;
       background: rgba(10, 37, 64, 0.85);
       border: 2px solid #ffb703;
       border-radius: 12px;
@@ -159,6 +159,38 @@
       cursor: pointer;
     }
 
+    /* نافذة النجاح واختيار مشروب آخر */
+    .success-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+      text-align: center;
+      z-index: 30;
+      width: 85%;
+      max-width: 320px;
+      border: 3px solid #ffb703;
+    }
+    .success-modal h3 { color: #0d47a1; margin-bottom: 8px; }
+    .success-modal p { color: #555; font-size: 14px; margin-bottom: 16px; }
+    .success-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-another { background: #ffb703; color: #001e3d; }
+    .btn-finish { background: #eceff1; color: #37474f; }
+
     .status-toast {
       display: none;
       position: fixed;
@@ -178,22 +210,25 @@
 </head>
 <body>
 
+  <!-- شاشة اختيار المشروب -->
   <div id="menuScreen">
-    <h1>⚓ قائمة مشروبات الميناء</h1>
-    <p>اختر مشروبك المفضل وقد السفينة عبر القناة للرسو واستلامه</p>
+    <h1>⚓ قائمة مشروبات قناة السويس</h1>
+    <p>اختر مشروبك المفضل وقد السفينة عبر المجرى الملاحي للرسو</p>
     <div class="drink-grid" id="drinkGrid"></div>
     <button id="startSailingBtn" disabled>ابدأ رحلة الإبحار 🚢</button>
   </div>
 
-  <div class="hud" id="gameHud">⚓ قُد سفينتك عبر المسار المائي وتجنب الشحوط في الضفاف</div>
+  <div class="hud" id="gameHud">⚓ قُد سفينتك عبر المجرى الملاحي المزدوج نحو رصيف المشروب</div>
   <div class="status-toast" id="statusToast">❌ لم يصب الهلب! حاول مجدداً</div>
   
   <canvas id="gameCanvas"></canvas>
 
+  <!-- خريطة الرادار المصغرة -->
   <div class="minimap-container">
-    <canvas id="minimapCanvas" width="80" height="140"></canvas>
+    <canvas id="minimapCanvas" width="85" height="150"></canvas>
   </div>
 
+  <!-- لوحة التحكم -->
   <div class="controls" id="navControls">
     <button class="ctrl-btn" id="upBtn">▲</button>
     <button class="ctrl-btn" id="leftBtn">◀</button>
@@ -202,6 +237,15 @@
   </div>
 
   <button class="toss-btn" id="tossBtn">⚓ ارمِ الهلب للرسو!</button>
+
+  <!-- نافذة تأكيد الطلب واختيار مشروب آخر -->
+  <div class="success-modal" id="successModal">
+    <div style="font-size: 40px; margin-bottom: 5px;">🎉</div>
+    <h3>تم الرسو بنجاح!</h3>
+    <p id="successMessage"></p>
+    <button class="success-btn btn-another" id="anotherDrinkBtn">طلب مشروب آخر 🍹</button>
+    <button class="success-btn btn-finish" id="finishBtn">متابعة الإبحار ⚓</button>
+  </div>
 
   <script>
     const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID";
@@ -218,6 +262,10 @@
     const menuScreen = document.getElementById('menuScreen');
     const drinkGrid = document.getElementById('drinkGrid');
     const startBtn = document.getElementById('startSailingBtn');
+    const successModal = document.getElementById('successModal');
+    const successMessage = document.getElementById('successMessage');
+    const anotherDrinkBtn = document.getElementById('anotherDrinkBtn');
+    const finishBtn = document.getElementById('finishBtn');
 
     let width = canvas.width = window.innerWidth;
     let height = canvas.height = window.innerHeight;
@@ -227,19 +275,14 @@
       height = canvas.height = window.innerHeight;
     });
 
-    /* محرك الصوت البحري المبني برمجياً بالكامل */
-    let audioCtx = null;
-    let engineOsc = null;
-    let engineGain = null;
-    let waveGain = null;
-    let sandNoiseGain = null;
+    /* المحرك الصوتي البحري البرمجي */
+    let audioCtx = null, engineOsc = null, engineGain = null, waveGain = null, sandNoiseGain = null;
 
     function initAudio() {
       if (audioCtx) return;
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContext();
 
-      // 1. صوت المحرك
       engineOsc = audioCtx.createOscillator();
       engineGain = audioCtx.createGain();
       engineOsc.type = 'sawtooth';
@@ -255,26 +298,21 @@
       engineGain.connect(audioCtx.destination);
       engineOsc.start();
 
-      // 2. ضجيج أمواج واحتكاك الرمال
       const bufferSize = audioCtx.sampleRate * 2;
       const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const output = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        output[i] = Math.random() * 2 - 1;
-      }
+      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
 
       const whiteNoise = audioCtx.createBufferSource();
       whiteNoise.buffer = noiseBuffer;
       whiteNoise.loop = true;
 
-      // فلتر الأمواج
       const waveFilter = audioCtx.createBiquadFilter();
       waveFilter.type = 'lowpass';
       waveFilter.frequency.setValueAtTime(300, audioCtx.currentTime);
       waveGain = audioCtx.createGain();
       waveGain.gain.setValueAtTime(0.06, audioCtx.currentTime);
 
-      // فلتر رمال الشحوط
       const sandFilter = audioCtx.createBiquadFilter();
       sandFilter.type = 'bandpass';
       sandFilter.frequency.setValueAtTime(800, audioCtx.currentTime);
@@ -338,12 +376,12 @@
     }
 
     const drinksList = [
-      { id: 1, name: "شاي كشري مزموق", icon: "☕", color: "#6d4c41", worldY: -600, side: "left" },
-      { id: 2, name: "قهوة تركي مظبوط", icon: "☕", color: "#4e342e", worldY: -1200, side: "right" },
-      { id: 3, name: "إسبريسو إيطالي دبل", icon: "🥃", color: "#3e2723", worldY: -1800, side: "left" },
-      { id: 4, name: "عصير مانجو فريش", icon: "🍹", color: "#ff8f00", worldY: -2400, side: "right" },
-      { id: 5, name: "ليمون نعناع مثلج", icon: "🍋", color: "#2e7d32", worldY: -3000, side: "left" },
-      { id: 6, name: "مياه معدنية مثلجة", icon: "🧊", color: "#0288d1", worldY: -3600, side: "right" }
+      { id: 1, name: "شاي كشري مزموق", icon: "☕", color: "#6d4c41", worldY: -600, side: "west" },
+      { id: 2, name: "قهوة تركي مظبوط", icon: "☕", color: "#4e342e", worldY: -1200, side: "east" },
+      { id: 3, name: "إسبريسو دبل", icon: "🥃", color: "#3e2723", worldY: -1800, side: "west" },
+      { id: 4, name: "عصير مانجو فريش", icon: "🍹", color: "#ff8f00", worldY: -2400, side: "east" },
+      { id: 5, name: "ليمون نعناع مثلج", icon: "🍋", color: "#2e7d32", worldY: -3000, side: "west" },
+      { id: 6, name: "مياه معدنية مثلجة", icon: "🧊", color: "#0288d1", worldY: -3600, side: "east" }
     ];
 
     let targetDrink = null;
@@ -351,18 +389,22 @@
     let isStuckInMud = false;
     let mudParticles = [];
 
-    drinksList.forEach(drink => {
-      const card = document.createElement('div');
-      card.className = 'drink-card';
-      card.innerHTML = `<div class="icon">${drink.icon}</div><div class="name">${drink.name}</div>`;
-      card.onclick = () => {
-        document.querySelectorAll('.drink-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        targetDrink = drink;
-        startBtn.disabled = false;
-      };
-      drinkGrid.appendChild(card);
-    });
+    function renderDrinkMenu() {
+      drinkGrid.innerHTML = "";
+      drinksList.forEach(drink => {
+        const card = document.createElement('div');
+        card.className = 'drink-card' + (targetDrink && targetDrink.id === drink.id ? ' selected' : '');
+        card.innerHTML = `<div class="icon">${drink.icon}</div><div class="name">${drink.name}</div>`;
+        card.onclick = () => {
+          document.querySelectorAll('.drink-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          targetDrink = drink;
+          startBtn.disabled = false;
+        };
+        drinkGrid.appendChild(card);
+      });
+    }
+    renderDrinkMenu();
 
     startBtn.onclick = () => {
       initAudio();
@@ -372,11 +414,27 @@
       hud.innerText = `🎯 وجهتك الملاحية: رصيف (${targetDrink.name})`;
     };
 
+    anotherDrinkBtn.onclick = () => {
+      successModal.style.display = 'none';
+      targetDrink = null;
+      startBtn.disabled = true;
+      renderDrinkMenu();
+      menuScreen.style.display = 'flex';
+      gameState = "MENU";
+    };
+
+    finishBtn.onclick = () => {
+      successModal.style.display = 'none';
+      gameState = "SAILING";
+      navControls.style.display = 'grid';
+      hud.innerText = "⚓ تابع الإبحار والاستمتاع بالمجرى الملاحي";
+    };
+
     const ship = {
-      worldX: width / 2,
+      worldX: width * 0.35, // البداية في القناة الغربية
       worldY: 100,
-      width: 36,
-      height: 64,
+      width: 34,
+      height: 62,
       speed: 0,
       maxForwardSpeed: 3.8,
       maxReverseSpeed: -2.2,
@@ -389,10 +447,21 @@
       wake: []
     };
 
-    function getCanalCenter(y) {
-      return (width / 2) + Math.sin(y * 0.002) * (width * 0.18) + Math.sin(y * 0.006) * 35;
+    // أبعاد جغرافية القناة المزدوجة والجزيرة الوسطى
+    const canalGeometry = {
+      westBank: width * 0.18,
+      westCanalEnd: width * 0.42,
+      eastCanalStart: width * 0.58,
+      eastBank: width * 0.82
+    };
+
+    // فتحات العبور بين القناتين في الجزيرة الوسطى
+    function isInCrossCut(worldY) {
+      const cutInterval = 800;
+      const cutHeight = 160;
+      const modY = Math.abs(worldY) % cutInterval;
+      return modY < cutHeight;
     }
-    const canalWidth = Math.min(width * 0.52, 280);
 
     const anchorGame = {
       angle: 0,
@@ -414,47 +483,62 @@
     function drawCanal() {
       const cameraY = ship.worldY - height * 0.7;
 
-      ctx.fillStyle = '#dec085';
-      ctx.fillRect(0, 0, width, height);
+      // 1. الضفة الغربية (خضراء - وادي الدلتا والمدن)
+      ctx.fillStyle = '#2d5a27';
+      ctx.fillRect(0, 0, canalGeometry.westBank, height);
 
-      ctx.beginPath();
-      for (let screenY = -20; screenY <= height + 20; screenY += 10) {
-        const currentWorldY = cameraY + screenY;
-        const centerX = getCanalCenter(currentWorldY);
-        const leftX = centerX - canalWidth / 2;
-        if (screenY === -20) ctx.moveTo(leftX, screenY);
-        else ctx.lineTo(leftX, screenY);
+      // تفاصيل زراعية ومباني بسيطة غرب القناة
+      ctx.fillStyle = '#3a6e33';
+      for (let y = 0; y < height; y += 60) {
+        ctx.fillRect(0, y, canalGeometry.westBank - 15, 45);
       }
-      for (let screenY = height + 20; screenY >= -20; screenY -= 10) {
-        const currentWorldY = cameraY + screenY;
-        const centerX = getCanalCenter(currentWorldY);
-        const rightX = centerX + canalWidth / 2;
-        ctx.lineTo(rightX, screenY);
-      }
-      ctx.closePath();
 
-      const waterGrad = ctx.createLinearGradient(0, 0, width, 0);
-      waterGrad.addColorStop(0.2, '#026aa7');
-      waterGrad.addColorStop(0.5, '#0288d1');
-      waterGrad.addColorStop(0.8, '#026aa7');
+      // 2. الضفة الشرقية (صحراء سيناء رمال ذهبية)
+      ctx.fillStyle = '#e2c589';
+      ctx.fillRect(canalGeometry.eastBank, 0, width - canalGeometry.eastBank, height);
+
+      // 3. المياه التركوازية (القناة بالكامل)
+      const waterGrad = ctx.createLinearGradient(canalGeometry.westBank, 0, canalGeometry.eastBank, 0);
+      waterGrad.addColorStop(0, '#00838f');
+      waterGrad.addColorStop(0.5, '#0097a7');
+      waterGrad.addColorStop(1, '#00acc1');
       ctx.fillStyle = waterGrad;
-      ctx.fill();
+      ctx.fillRect(canalGeometry.westBank, 0, canalGeometry.eastBank - canalGeometry.westBank, height);
 
-      ctx.strokeStyle = '#c49a45';
-      ctx.lineWidth = 6;
-      ctx.stroke();
+      // 4. الجزيرة الوسطى الرملية بين القناتين (مع فتحات العبور)
+      const islandWidth = canalGeometry.eastCanalStart - canalGeometry.westCanalEnd;
+      const islandX = canalGeometry.westCanalEnd;
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      for (let screenY = -50; screenY < height + 50; screenY += 10) {
+        const currentWorldY = cameraY + screenY;
+        if (!isInCrossCut(currentWorldY)) {
+          ctx.fillStyle = '#d9b775';
+          ctx.fillRect(islandX, screenY, islandWidth, 11);
+          // تضاريس رمال على الجزيرة
+          ctx.fillStyle = '#c7a35e';
+          ctx.fillRect(islandX + 10, screenY, islandWidth - 20, 11);
+        }
+      }
+
+      // خطوط المنتصف الملاحية في القناتين
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
       ctx.lineWidth = 2;
       ctx.setLineDash([15, 15]);
+
+      // منتصف القناة الغربية
       ctx.beginPath();
-      for (let screenY = -20; screenY <= height + 20; screenY += 15) {
-        const currentWorldY = cameraY + screenY;
-        const centerX = getCanalCenter(currentWorldY);
-        if (screenY === -20) ctx.moveTo(centerX, screenY);
-        else ctx.lineTo(centerX, screenY);
-      }
+      const midWest = (canalGeometry.westBank + canalGeometry.westCanalEnd) / 2;
+      ctx.moveTo(midWest, 0);
+      ctx.lineTo(midWest, height);
       ctx.stroke();
+
+      // منتصف القناة الشرقية (الجديدة)
+      ctx.beginPath();
+      const midEast = (canalGeometry.eastCanalStart + canalGeometry.eastBank) / 2;
+      ctx.moveTo(midEast, 0);
+      ctx.lineTo(midEast, height);
+      ctx.stroke();
+
       ctx.setLineDash([]);
     }
 
@@ -473,14 +557,13 @@
       }
       ship.wake = ship.wake.filter(p => p.alpha > 0);
 
-      // رسم ذرات الطمي والرمال عند الشحوط
       for (let i = 0; i < mudParticles.length; i++) {
         const m = mudParticles[i];
         m.alpha -= 0.02;
         m.x += m.vx;
         m.y += m.vy;
         if (m.alpha > 0) {
-          ctx.fillStyle = `rgba(141, 110, 99, ${m.alpha})`;
+          ctx.fillStyle = `rgba(161, 136, 127, ${m.alpha})`;
           ctx.beginPath();
           ctx.arc(m.x, m.y - cameraY, m.size, 0, Math.PI * 2);
           ctx.fill();
@@ -494,12 +577,11 @@
 
       drinksList.forEach(st => {
         const renderY = st.worldY - cameraY;
-        const centerX = getCanalCenter(st.worldY);
-        const isLeft = st.side === 'left';
-        const canalEdge = isLeft ? (centerX - canalWidth / 2) : (centerX + canalWidth / 2);
+        const isWest = st.side === 'west';
+        const canalEdge = isWest ? canalGeometry.westBank : canalGeometry.eastBank;
         const dockWidth = 95;
         const dockHeight = 70;
-        const drawX = isLeft ? canalEdge - dockWidth - 6 : canalEdge + 6;
+        const drawX = isWest ? canalEdge - dockWidth - 6 : canalEdge + 6;
 
         const isSelectedTarget = targetDrink && targetDrink.id === st.id;
 
@@ -536,7 +618,7 @@
           if (isSelectedTarget && gameState === "SAILING") {
             const dist = Math.hypot(ship.worldX - canalEdge, ship.worldY - st.worldY);
             if (dist < 85) {
-              startAnchorGame(st, isLeft ? canalEdge - 45 : canalEdge + 45, renderY);
+              startAnchorGame(st, isWest ? canalEdge - 45 : canalEdge + 45, renderY);
             }
           }
         }
@@ -548,7 +630,6 @@
       const screenY = height * 0.7;
 
       ctx.save();
-      // اهتزاز المركب عند الغرز
       if (isStuckInMud) {
         ctx.translate((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4);
       }
@@ -560,6 +641,7 @@
       ctx.shadowOffsetX = 3;
       ctx.shadowOffsetY = 3;
 
+      // سفينة حاويات حديثة
       ctx.fillStyle = isStuckInMud ? '#b71c1c' : '#d32f2f';
       ctx.beginPath();
       ctx.moveTo(0, -ship.height / 2);
@@ -582,25 +664,40 @@
     }
 
     function drawMinimap() {
-      miniCtx.clearRect(0, 0, 80, 140);
+      miniCtx.clearRect(0, 0, 85, 150);
       const totalY = -3800;
-      miniCtx.fillStyle = '#0288d1';
-      miniCtx.fillRect(15, 10, 50, 120);
+
+      // القناتين في الخريطة المصغرة
+      miniCtx.fillStyle = '#00acc1';
+      miniCtx.fillRect(15, 10, 22, 130); // الغربية
+      miniCtx.fillRect(48, 10, 22, 130); // الشرقية
+
+      // الجزيرة الوسطى
+      miniCtx.fillStyle = '#d9b775';
+      miniCtx.fillRect(37, 10, 11, 130);
+
+      // فتحات العبور في الخريطة
+      miniCtx.fillStyle = '#00acc1';
+      miniCtx.fillRect(37, 35, 11, 15);
+      miniCtx.fillRect(37, 75, 11, 15);
+      miniCtx.fillRect(37, 115, 11, 15);
 
       if (targetDrink) {
         const targetProgress = (targetDrink.worldY - 100) / (totalY - 100);
-        const targetMarkerY = 130 - (targetProgress * 120);
+        const targetMarkerY = 135 - (targetProgress * 125);
+        const targetMarkerX = targetDrink.side === 'west' ? 25 : 60;
         miniCtx.fillStyle = '#ffb703';
         miniCtx.beginPath();
-        miniCtx.arc(40, Math.max(12, Math.min(128, targetMarkerY)), 5, 0, Math.PI * 2);
+        miniCtx.arc(targetMarkerX, Math.max(12, Math.min(138, targetMarkerY)), 5, 0, Math.PI * 2);
         miniCtx.fill();
       }
 
       const shipProgress = (ship.worldY - 100) / (totalY - 100);
-      const shipMarkerY = 130 - (shipProgress * 120);
+      const shipMarkerY = 135 - (shipProgress * 125);
+      const shipMarkerX = (ship.worldX / width) * 85;
       miniCtx.fillStyle = '#d32f2f';
       miniCtx.beginPath();
-      miniCtx.arc(40, Math.max(12, Math.min(128, shipMarkerY)), 4, 0, Math.PI * 2);
+      miniCtx.arc(Math.max(15, Math.min(70, shipMarkerX)), Math.max(12, Math.min(138, shipMarkerY)), 4, 0, Math.PI * 2);
       miniCtx.fill();
     }
 
@@ -617,7 +714,7 @@
     }
 
     function drawAnchorMinigame() {
-      const isLeft = targetDrink.side === 'left';
+      const isWest = targetDrink.side === 'west';
       const startX = ship.worldX;
       const startY = height * 0.7;
 
@@ -643,7 +740,7 @@
         }
       }
 
-      const baseAngle = isLeft ? Math.PI : 0;
+      const baseAngle = isWest ? Math.PI : 0;
       const currentAngle = baseAngle + anchorGame.angle;
 
       if (gameState === "AIMING") {
@@ -704,25 +801,19 @@
       gameState = "DOCKED";
       playWinSound();
       const selected = targetDrink.name;
-      hud.innerText = `🎉 تم الرسو بنجاح! جاري إرسال طلب (${selected})...`;
 
       fetch(FORMSPREE_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           الطلب: selected,
-          الحالة: "رسو ملاحة ناجح",
+          الحالة: "رسو ملاحة بقناة السويس",
           الوقت: new Date().toLocaleTimeString('ar-EG')
         })
-      }).then(() => {
-        setTimeout(() => {
-          alert(`تم تثبيت السفينة وإرسال طلب (${selected}) للصالون بنجاح! ☕⚓`);
-          location.reload();
-        }, 500);
-      }).catch(() => {
-        alert(`تم التثبيت بنجاح لـ (${selected})!`);
-        location.reload();
       });
+
+      successMessage.innerText = `تم تثبيت السفينة بنجاح وإرسال طلب (${selected}) لطاقم الصالون!`;
+      successModal.style.display = 'block';
     }
 
     function handleFailure() {
@@ -738,21 +829,18 @@
 
     function update() {
       if (gameState === "SAILING") {
-        // حساب فيزياء ومقاومة الشحوط
         let acceleration = 0.2;
         let maxForward = ship.maxForwardSpeed;
         let maxReverse = ship.maxReverseSpeed;
         let turn = ship.turnSpeed;
 
         if (isStuckInMud) {
-          // تقليل السرعة والقوة بشكل كبير عند الغرز
           acceleration = 0.04;
           maxForward = 0.8;
           maxReverse = -0.9;
           turn = 0.015;
-          ship.speed *= 0.85; // احتكاك رمال شديد
+          ship.speed *= 0.85;
 
-          // توليد ذرات رمال
           if (Math.abs(ship.speed) > 0.2) {
             mudParticles.push({
               x: ship.worldX + (Math.random() - 0.5) * 20,
@@ -779,28 +867,22 @@
         ship.worldX += Math.cos(ship.angle) * ship.speed;
         ship.worldY += Math.sin(ship.angle) * ship.speed;
 
-        // التحقق من الشحوط عند حواف الضفة
-        const currentCenter = getCanalCenter(ship.worldY);
-        const leftBank = currentCenter - canalWidth / 2 + 18;
-        const rightBank = currentCenter + canalWidth / 2 - 18;
+        // فحص الشحوط في الضفاف والجزيرة الوسطى
+        const inWestCanal = ship.worldX >= canalGeometry.westBank && ship.worldX <= canalGeometry.westCanalEnd;
+        const inEastCanal = ship.worldX >= canalGeometry.eastCanalStart && ship.worldX <= canalGeometry.eastBank;
+        const inCut = isInCrossCut(ship.worldY) && (ship.worldX >= canalGeometry.westCanalEnd && ship.worldX <= canalGeometry.eastCanalStart);
 
-        if (ship.worldX < leftBank || ship.worldX > rightBank) {
-          if (!isStuckInMud) {
-            hud.innerText = "⚠️ شحوط في الضفة! قم بالمناورة للخلف للتحرر";
-          }
+        if (!inWestCanal && !inEastCanal && !inCut) {
+          if (!isStuckInMud) hud.innerText = "⚠️ شحوط في الرمال! ناور للخلف للعودة للمجرى المائي";
           isStuckInMud = true;
-
-          // حدود أقصى للغرز لمنع الخروج الكامل
-          if (ship.worldX < leftBank - 25) ship.worldX = leftBank - 25;
-          if (ship.worldX > rightBank + 25) ship.worldX = rightBank + 25;
+          // منع الخروج التام من الشاشة
+          if (ship.worldX < canalGeometry.westBank - 25) ship.worldX = canalGeometry.westBank - 25;
+          if (ship.worldX > canalGeometry.eastBank + 25) ship.worldX = canalGeometry.eastBank + 25;
         } else {
-          if (isStuckInMud) {
-            hud.innerText = `🎯 وجهتك الملاحية: رصيف (${targetDrink.name})`;
-          }
+          if (isStuckInMud && targetDrink) hud.innerText = `🎯 وجهتك الملاحية: رصيف (${targetDrink.name})`;
           isStuckInMud = false;
         }
 
-        // تحديث الأصوات التفاعلية للمحرك والاحتكاك
         if (audioCtx) {
           const targetFreq = 40 + Math.abs(ship.speed) * 18;
           engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
