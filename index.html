@@ -29,17 +29,18 @@
     
     .agility-logo-box {
       background: #ffffff;
-      padding: 8px 18px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      padding: 10px 22px;
+      border-radius: 16px;
+      margin-bottom: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .agility-logo-box img {
-      height: 38px;
-      object-fit: contain;
+    .agility-logo-box svg {
+      width: 170px;
+      height: 48px;
+      display: block;
     }
 
     #menuScreen h1 { font-size: 22px; margin-bottom: 6px; color: #ffb703; text-align: center; }
@@ -116,13 +117,18 @@
       white-space: nowrap;
     }
     .hud-logo {
-      height: 20px;
       background: #fff;
       padding: 2px 6px;
-      border-radius: 4px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+    }
+    .hud-logo svg {
+      width: 65px;
+      height: 18px;
+      display: block;
     }
 
-    /* زر الزمارة المستمرة */
     .horn-btn {
       position: fixed;
       bottom: 25px;
@@ -260,10 +266,16 @@
 </head>
 <body>
 
-  <!-- شاشة البداية مع لوجو أجيلتي -->
+  <!-- شاشة البداية مع لوجو Agility SVG مدمج فائق الوضوح -->
   <div id="menuScreen">
     <div class="agility-logo-box">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Agility_Logistics_logo.svg/1200px-Agility_Logistics_logo.svg.png" alt="Agility Logo">
+      <svg viewBox="0 0 240 65" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M70 28 C85 10, 120 18, 140 26 C170 38, 200 24, 215 28 C185 45, 145 42, 125 35 C105 28, 90 32, 70 28 Z" fill="#F37023"/>
+        <path d="M48 26 C58 16, 75 14, 88 18 C78 26, 62 28, 48 26 Z" fill="#FFC20E"/>
+        <path d="M80 20 C105 20, 135 28, 150 32 C130 38, 100 32, 80 20 Z" fill="#FFFFFF" opacity="0.8"/>
+        <!-- كلمة Agility -->
+        <text x="5" y="48" font-family="'Segoe UI', Arial, sans-serif" font-weight="bold" font-style="italic" font-size="34" fill="#9E1B32">Agility</text>
+      </svg>
     </div>
     <h1>قائمة مشروبات أجيلتي</h1>
     <p>اختر مشروبك المفضل وقد السفينة للرسو واستلامه</p>
@@ -272,7 +284,13 @@
   </div>
 
   <div class="hud" id="gameHud">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Agility_Logistics_logo.svg/1200px-Agility_Logistics_logo.svg.png" class="hud-logo" alt="Agility">
+    <div class="hud-logo">
+      <svg viewBox="0 0 240 65" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M70 28 C85 10, 120 18, 140 26 C170 38, 200 24, 215 28 C185 45, 145 42, 125 35 C105 28, 90 32, 70 28 Z" fill="#F37023"/>
+        <path d="M48 26 C58 16, 75 14, 88 18 C78 26, 62 28, 48 26 Z" fill="#FFC20E"/>
+        <text x="5" y="48" font-family="'Segoe UI', Arial, sans-serif" font-weight="bold" font-style="italic" font-size="34" fill="#9E1B32">Agility</text>
+      </svg>
+    </div>
     <span id="hudText">اسحب في أي مكان بالشاشة لتوجيه السفينة</span>
   </div>
   
@@ -332,10 +350,8 @@
       height = canvas.height = window.innerHeight;
     });
 
-    /* محرك الصوت */
+    /* المحرك الصوتي */
     let audioCtx = null, engineOsc = null, engineGain = null, waveGain = null, sandNoiseGain = null;
-    
-    // متغيرات الزمارة المستمرة
     let hornOsc1 = null, hornOsc2 = null, hornGain = null;
     let isHonking = false;
     let vibrateInterval = null;
@@ -392,7 +408,6 @@
       whiteNoise.start();
     }
 
-    // بدء صوت الزمارة طالما الزر مضغوط
     function startHorn() {
       if (!audioCtx) initAudio();
       if (isHonking) return;
@@ -425,7 +440,6 @@
       }
     }
 
-    // إيقاف الزمارة فور رفع الإصبع
     function stopHorn() {
       if (!isHonking) return;
       isHonking = false;
@@ -712,7 +726,7 @@
         if (m.alpha > 0) {
           ctx.fillStyle = `rgba(161, 136, 127, ${m.alpha})`;
           ctx.beginPath();
-          ctx.arc(m.x, m.y - cameraY, p.size || 3, 0, Math.PI * 2);
+          ctx.arc(m.x, m.y - cameraY, 3, 0, Math.PI * 2);
           ctx.fill();
         }
       }
