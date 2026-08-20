@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>بوفيه قناة السويس</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #f0e68c;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      user-select: none;
+      touch-action: none;
+    }
+    #gameCanvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px 25px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      text-align: center;
+      z-index: 10;
+      width: 80%;
+      max-width: 320px;
+    }
+    .modal h3 { margin-top: 0; color: #0d47a1; }
+    .btn {
+      padding: 10px 18px;
+      margin: 8px 4px 0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+    }
+    .btn-confirm { background-color: #2e7d32; color: white; }
+    .btn-cancel { background-color: #c62828; color: white; }
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 5;
+    }
+    .ctrl-btn {
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 2px solid #0d47a1;
+      border-radius: 50%;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="controls">
+    <button class="ctrl-btn" id="leftBtn">◀</button>
+    <button class="ctrl-btn" id="upBtn">▲</button>
+    <button class="ctrl-btn" id="rightBtn">▶</button>
+  </div>
+
+  <div class="modal" id="orderModal">
+    <h3>محطة الضيافة</h3>
+    <p id="modalText"></p>
+    <button class="btn btn-confirm" id="confirmBtn">تأكيد الطلب</button>
+    <button class="btn btn-cancel" id="cancelBtn">مواصلة الإبحار</button>
+  </div>
+
+  <script>
+    const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID"; // استبدل بهذا الرابط رابطك الخاص
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const modal = document.getElementById('orderModal');
+    const modalText = document.getElementById('modalText');
+
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const ship = {
+      x: width / 2,
+      y: height - 120,
+      width: 32,
+      height: 55,
+      speed: 3.5,
+      movingUp: false,
+      movingLeft: false,
+      movingRight: false
+    };
+
+    const stations = [
+      { name: "شاي كشري مزموق", side: "left", y: height - 250, triggered: false },
+      { name: "قهوة تركي مظبوط", side: "right", y: height - 420, triggered: false },
+      { name: "إسبريسو دبل", side: "left", y: height - 590, triggered: false },
+      { name: "عصير برتقال فريش", side: "right", y: height - 760, triggered: false },
+      { name: "مياه معدنية مثلجة", side: "left", y: height - 930, triggered: false }
+    ];
+
+    let activeStation = null;
+    let cameraY = 0;
+
+    function drawCanal() {
+      // مياه القناة
+      ctx.fillStyle = '#0288d1';
+      ctx.fillRect(width * 0.2, 0, width * 0.6, height);
+
+      // الضفة الشرقية والغربية
+      ctx.fillStyle = '#edd187';
+      ctx.fillRect(0, 0, width * 0.2, height);
+      ctx.fillRect(width * 0.8, 0, width * 0.2, height);
+
+      // خطوط المنتصف الملاحية
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.setLineDash([20, 15]);
+      ctx.beginPath();
+      ctx.moveTo(width / 2, 0);
+      ctx.lineTo(width / 2, height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawStations() {
+      stations.forEach(st => {
+        const renderY = st.y - cameraY;
+        const renderX = st.side === 'left' ? (width * 0.2 - 80) : (width * 0.8);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#0d47a1';
+        ctx.lineWidth = 3;
+        ctx.fillRect(renderX, renderY - 30, 80, 60);
+        ctx.strokeRect(renderX, renderY - 30, 80, 60);
+
+        ctx.fillStyle = '#0d47a1';
+        ctx.font = 'bold 12px Tahoma';
+        ctx.textAlign = 'center';
+        ctx.fillText(st.name, renderX + 40, renderY + 5);
+
+        // فحص الاقتراب من المحطة
+        if (Math.abs((ship.y + cameraY) - st.y) < 40 && !st.triggered && !activeStation) {
+          showModal(st);
+        }
+      });
+    }
+
+    function drawShip() {
+      ctx.save();
+      ctx.translate(ship.x, ship.y);
+
+      // جسم المركب
+      ctx.fillStyle = '#d32f2f';
+      ctx.beginPath();
+      ctx.moveTo(0, -ship.height / 2);
+      ctx.lineTo(ship.width / 2, ship.height / 2);
+      ctx.lineTo(-ship.width / 2, ship.height / 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // كابينة القيادة
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-ship.width / 4, -ship.height / 6, ship.width / 2, ship.height / 3);
+
+      ctx.restore();
+    }
+
+    function showModal(station) {
+      activeStation = station;
+      modalText.innerText = `وصلت أمام محطة:\n(${station.name})\nهل تود طلب هذا المشروب؟`;
+      modal.style.display = 'block';
+    }
+
+    document.getElementById('cancelBtn').onclick = () => {
+      modal.style.display = 'none';
+      if (activeStation) {
+        activeStation.triggered = true;
+        activeStation = null;
+      }
+    };
+
+    document.getElementById('confirmBtn').onclick = () => {
+      const selected = activeStation.name;
+      modalText.innerText = "جاري إرسال طلبك للصالون...";
+      
+      fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          الطلب: selected,
+          الوقت: new Date().toLocaleTimeString('ar-EG'),
+          موقع_الطلب: "صالون كبار الزوار"
+        })
+      }).then(() => {
+        alert(`تم إرسال طلبك بنجاح (${selected})، سيصلك حالاً! ☕`);
+        modal.style.display = 'none';
+        activeStation = null;
+      }).catch(() => {
+        alert("حدث خطأ أثناء الإرسال، برجاء المحاولة مجدداً.");
+      });
+    };
+
+    function update() {
+      if (!activeStation) {
+        if (ship.movingUp) cameraY -= ship.speed;
+        if (ship.movingLeft && ship.x > width * 0.25) ship.x -= ship.speed;
+        if (ship.movingRight && ship.x < width * 0.75) ship.x += ship.speed;
+      }
+
+      ctx.clearRect(0, 0, width, height);
+      drawCanal();
+      drawStations();
+      drawShip();
+
+      requestAnimationFrame(update);
+    }
+
+    // إعداد أزرار الحركة للشاشات اللمسية والكيبورد
+    const setupControl = (btnId, prop) => {
+      const el = document.getElementById(btnId);
+      el.addEventListener('pointerdown', (e) => { e.preventDefault(); ship[prop] = true; });
+      el.addEventListener('pointerup', () => ship[prop] = false);
+      el.addEventListener('pointerleave', () => ship[prop] = false);
+    };
+
+    setupControl('upBtn', 'movingUp');
+    setupControl('leftBtn', 'movingLeft');
+    setupControl('rightBtn', 'movingRight');
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp') ship.movingUp = true;
+      if (e.key === 'ArrowLeft') ship.movingLeft = true;
+      if (e.key === 'ArrowRight') ship.movingRight = true;
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowUp') ship.movingUp = false;
+      if (e.key === 'ArrowLeft') ship.movingLeft = false;
+      if (e.key === 'ArrowRight') ship.movingRight = false;
+    });
+
+    update();
+  </script>
+</body>
+</html>
