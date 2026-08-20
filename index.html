@@ -102,45 +102,46 @@
       position: fixed;
       bottom: 20px;
       right: 15px;
-      width: 80px;
-      height: 140px;
+      width: 75px;
+      height: 135px;
       background: rgba(10, 37, 64, 0.85);
       border: 2px solid #ffb703;
       border-radius: 12px;
       overflow: hidden;
       z-index: 10;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      pointer-events: none;
     }
     #minimapCanvas { width: 100%; height: 100%; }
 
-    /* دائرة التحكم اللمسية (Joystick) */
-    .joystick-zone {
+    /* عصا التحكم اللمسية العائمة الديناميكية */
+    #floatingJoystick {
+      display: none;
       position: fixed;
-      bottom: 25px;
-      left: 25px;
-      width: 120px;
-      height: 120px;
-      background: rgba(10, 37, 64, 0.4);
-      border: 2px solid rgba(255, 255, 255, 0.4);
+      width: 110px;
+      height: 110px;
+      margin-left: -55px;
+      margin-top: -55px;
+      background: rgba(10, 37, 64, 0.45);
+      border: 2px solid rgba(255, 255, 255, 0.5);
       border-radius: 50%;
       z-index: 15;
-      touch-action: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+      pointer-events: none;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
-    .joystick-knob {
-      width: 50px;
-      height: 50px;
+    #floatingKnob {
+      width: 44px;
+      height: 44px;
+      margin-left: -22px;
+      margin-top: -22px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
       background: linear-gradient(135deg, #0288d1, #01579b);
       border: 2px solid #fff;
       border-radius: 50%;
-      position: absolute;
       box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-      pointer-events: none;
       transform: translate(0px, 0px);
-      transition: transform 0.05s ease-out;
     }
 
     .toss-btn {
@@ -211,31 +212,29 @@
 </head>
 <body>
 
-  <!-- شاشة اختيار المشروب -->
   <div id="menuScreen">
     <h1>⚓ قائمة مشروبات قناة السويس</h1>
-    <p>اختر مشروبك المفضل وقُد السفينة بالدائرة للرسو واستلامه</p>
+    <p>اختر مشروبك المفضل والمس أي مكان بالشاشة لقيادة وتوجيه السفينة</p>
     <div class="drink-grid" id="drinkGrid"></div>
     <button id="startSailingBtn" disabled>ابدأ رحلة الإبحار 🚢</button>
   </div>
 
-  <div class="hud" id="gameHud">⚓ حرّك الدائرة للأمام وللجوانب لقيادة وتوجيه السفينة</div>
+  <div class="hud" id="gameHud">⚓ المس واسحب في أي مكان بالشاشة للتحكم بالسفينة</div>
   <div class="status-toast" id="statusToast">❌ لم يصب الهلب! حاول مجدداً</div>
   
   <canvas id="gameCanvas"></canvas>
 
   <div class="minimap-container">
-    <canvas id="minimapCanvas" width="80" height="140"></canvas>
+    <canvas id="minimapCanvas" width="75" height="135"></canvas>
   </div>
 
-  <!-- دائرة الجويستيك اللمسية -->
-  <div class="joystick-zone" id="joystickZone">
-    <div class="joystick-knob" id="joystickKnob"></div>
+  <!-- الجويستيك العائم الذي يظهر تحت الإصبع -->
+  <div id="floatingJoystick">
+    <div id="floatingKnob"></div>
   </div>
 
   <button class="toss-btn" id="tossBtn">⚓ ارمِ الهلب للرسو!</button>
 
-  <!-- نافذة النجاح واختيار مشروب آخر -->
   <div class="success-modal" id="successModal">
     <div style="font-size: 40px; margin-bottom: 5px;">🎉</div>
     <h3>تم الرسو بنجاح!</h3>
@@ -263,8 +262,8 @@
     const anotherDrinkBtn = document.getElementById('anotherDrinkBtn');
     const finishBtn = document.getElementById('finishBtn');
 
-    const joystickZone = document.getElementById('joystickZone');
-    const joystickKnob = document.getElementById('joystickKnob');
+    const floatingJoystick = document.getElementById('floatingJoystick');
+    const floatingKnob = document.getElementById('floatingKnob');
 
     let width = canvas.width = window.innerWidth;
     let height = canvas.height = window.innerHeight;
@@ -274,7 +273,6 @@
       height = canvas.height = window.innerHeight;
     });
 
-    /* المحرك الصوتي */
     let audioCtx = null, engineOsc = null, engineGain = null, waveGain = null, sandNoiseGain = null;
 
     function initAudio() {
@@ -410,7 +408,7 @@
       playShipHorn();
       menuScreen.style.display = 'none';
       gameState = "SAILING";
-      hud.innerText = `🎯 وجهتك الملاحية: رصيف (${targetDrink.name})`;
+      hud.innerText = `🎯 وجهتك: رصيف (${targetDrink.name})`;
     };
 
     anotherDrinkBtn.onclick = () => {
@@ -425,7 +423,6 @@
     finishBtn.onclick = () => {
       successModal.style.display = 'none';
       gameState = "SAILING";
-      joystickZone.style.display = 'flex';
       hud.innerText = "⚓ تابع الإبحار والاستمتاع بالمجرى الملاحي";
     };
 
@@ -442,17 +439,29 @@
       wake: []
     };
 
-    // مدخلات الجويستيك
+    // إدارة الجويستيك الديناميكي العائم
+    let touchOrigin = null;
     let joystickInput = { x: 0, y: 0 };
     const maxKnobDistance = 45;
 
-    function handleJoystickMove(clientX, clientY) {
-      const rect = joystickZone.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
+    window.addEventListener('pointerdown', (e) => {
+      if (gameState !== "SAILING") return;
+      // تجاهل إذا ضغط على الخريطة المصغرة أو الأزرار
+      if (e.target.closest('.minimap-container') || e.target.closest('#tossBtn') || e.target.closest('#successModal')) return;
 
-      let dx = clientX - centerX;
-      let dy = clientY - centerY;
+      touchOrigin = { x: e.clientX, y: e.clientY };
+      floatingJoystick.style.left = `${e.clientX}px`;
+      floatingJoystick.style.top = `${e.clientY}px`;
+      floatingJoystick.style.display = 'block';
+      floatingKnob.style.transform = 'translate(0px, 0px)';
+      joystickInput = { x: 0, y: 0 };
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!touchOrigin || gameState !== "SAILING") return;
+
+      let dx = e.clientX - touchOrigin.x;
+      let dy = e.clientY - touchOrigin.y;
       const dist = Math.hypot(dx, dy);
 
       if (dist > maxKnobDistance) {
@@ -460,38 +469,19 @@
         dy = (dy / dist) * maxKnobDistance;
       }
 
-      joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-      // إحداثيات نسبية من -1 إلى 1
+      floatingKnob.style.transform = `translate(${dx}px, ${dy}px)`;
       joystickInput.x = dx / maxKnobDistance;
       joystickInput.y = dy / maxKnobDistance;
-    }
+    });
 
-    function resetJoystick() {
-      joystickKnob.style.transform = `translate(0px, 0px)`;
+    const removeFloatingJoystick = () => {
+      touchOrigin = null;
+      floatingJoystick.style.display = 'none';
       joystickInput = { x: 0, y: 0 };
-    }
-
-    let isTouchingJoystick = false;
-
-    joystickZone.addEventListener('pointerdown', (e) => {
-      isTouchingJoystick = true;
-      joystickZone.setPointerCapture(e.pointerId);
-      handleJoystickMove(e.clientX, e.clientY);
-    });
-
-    joystickZone.addEventListener('pointermove', (e) => {
-      if (isTouchingJoystick) {
-        handleJoystickMove(e.clientX, e.clientY);
-      }
-    });
-
-    const endJoystick = () => {
-      isTouchingJoystick = false;
-      resetJoystick();
     };
 
-    joystickZone.addEventListener('pointerup', endJoystick);
-    joystickZone.addEventListener('pointercancel', endJoystick);
+    window.addEventListener('pointerup', removeFloatingJoystick);
+    window.addEventListener('pointercancel', removeFloatingJoystick);
 
     const canalGeometry = {
       westBank: width * 0.18,
@@ -698,37 +688,37 @@
     }
 
     function drawMinimap() {
-      miniCtx.clearRect(0, 0, 80, 140);
+      miniCtx.clearRect(0, 0, 75, 135);
       const totalY = -3800;
 
       miniCtx.fillStyle = '#00acc1';
-      miniCtx.fillRect(15, 10, 20, 120);
-      miniCtx.fillRect(45, 10, 20, 120);
+      miniCtx.fillRect(12, 10, 20, 115);
+      miniCtx.fillRect(43, 10, 20, 115);
 
       miniCtx.fillStyle = '#d9b775';
-      miniCtx.fillRect(35, 10, 10, 120);
+      miniCtx.fillRect(32, 10, 11, 115);
 
       miniCtx.fillStyle = '#00acc1';
-      miniCtx.fillRect(35, 35, 10, 15);
-      miniCtx.fillRect(35, 75, 10, 15);
-      miniCtx.fillRect(35, 115, 10, 15);
+      miniCtx.fillRect(32, 35, 11, 15);
+      miniCtx.fillRect(32, 70, 11, 15);
+      miniCtx.fillRect(32, 105, 11, 15);
 
       if (targetDrink) {
         const targetProgress = (targetDrink.worldY - 100) / (totalY - 100);
-        const targetMarkerY = 125 - (targetProgress * 110);
-        const targetMarkerX = targetDrink.side === 'west' ? 25 : 55;
+        const targetMarkerY = 120 - (targetProgress * 105);
+        const targetMarkerX = targetDrink.side === 'west' ? 22 : 53;
         miniCtx.fillStyle = '#ffb703';
         miniCtx.beginPath();
-        miniCtx.arc(targetMarkerX, Math.max(12, Math.min(128, targetMarkerY)), 5, 0, Math.PI * 2);
+        miniCtx.arc(targetMarkerX, Math.max(12, Math.min(125, targetMarkerY)), 5, 0, Math.PI * 2);
         miniCtx.fill();
       }
 
       const shipProgress = (ship.worldY - 100) / (totalY - 100);
-      const shipMarkerY = 125 - (shipProgress * 110);
-      const shipMarkerX = (ship.worldX / width) * 80;
+      const shipMarkerY = 120 - (shipProgress * 105);
+      const shipMarkerX = (ship.worldX / width) * 75;
       miniCtx.fillStyle = '#d32f2f';
       miniCtx.beginPath();
-      miniCtx.arc(Math.max(15, Math.min(65, shipMarkerX)), Math.max(12, Math.min(128, shipMarkerY)), 4, 0, Math.PI * 2);
+      miniCtx.arc(Math.max(12, Math.min(63, shipMarkerX)), Math.max(12, Math.min(125, shipMarkerY)), 4, 0, Math.PI * 2);
       miniCtx.fill();
     }
 
@@ -739,7 +729,7 @@
       anchorGame.anchorDist = 0;
       anchorGame.angle = 0;
 
-      joystickZone.style.display = 'none';
+      removeFloatingJoystick();
       tossBtn.style.display = 'block';
       hud.innerText = `🎯 ارمِ الهلب لتثبيت السفينة في حلقة رصيف (${station.name})!`;
     }
@@ -882,8 +872,7 @@
           }
         }
 
-        // تحكم الجويستيك اللمسي المتدرج
-        // -y للأعلى (تسارع للأمام)، +y للأسفل (رجوع للخلف)
+        // استجابة سلسة لموضع الإصبع وسحبه
         if (joystickInput.y < -0.1) {
           const targetSpd = Math.abs(joystickInput.y) * maxForward;
           ship.speed += (targetSpd - ship.speed) * 0.15;
@@ -894,7 +883,6 @@
           ship.speed *= isStuckInMud ? 0.75 : 0.94;
         }
 
-        // x لليمين واليسار (الدوران)
         if (Math.abs(joystickInput.x) > 0.1) {
           ship.angle += joystickInput.x * turn;
         }
@@ -907,12 +895,12 @@
         const inCut = isInCrossCut(ship.worldY) && (ship.worldX >= canalGeometry.westCanalEnd && ship.worldX <= canalGeometry.eastCanalStart);
 
         if (!inWestCanal && !inEastCanal && !inCut) {
-          if (!isStuckInMud) hud.innerText = "⚠️ شحوط في الرمال! حرّك الدائرة للخلف للخروج";
+          if (!isStuckInMud) hud.innerText = "⚠️ شحوط في الرمال! حرّك إصبعك للخلف للخروج";
           isStuckInMud = true;
           if (ship.worldX < canalGeometry.westBank - 25) ship.worldX = canalGeometry.westBank - 25;
           if (ship.worldX > canalGeometry.eastBank + 25) ship.worldX = canalGeometry.eastBank + 25;
         } else {
-          if (isStuckInMud && targetDrink) hud.innerText = `🎯 وجهتك الملاحية: رصيف (${targetDrink.name})`;
+          if (isStuckInMud && targetDrink) hud.innerText = `🎯 وجهتك: رصيف (${targetDrink.name})`;
           isStuckInMud = false;
         }
 
